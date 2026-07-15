@@ -12,4 +12,4 @@ cargo build --release
 
 ## Packaging / releasing
 
-See `packaging/README.md`. In short: bump `Cargo.toml`'s version, tag `vX.Y.Z`, push the tag to both remotes — `.forgejo/workflows/package.yml` builds and publishes to the `[breadway]` pacman repo automatically.
+See `packaging/README.md`. In short: bump `Cargo.toml`'s version, tag `vX.Y.Z`, push the tag to `forgejo` — `.forgejo/workflows/package.yml` builds and publishes to the `[breadway]` pacman repo automatically.
