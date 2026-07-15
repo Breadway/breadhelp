@@ -18,7 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          pacman -Syu --noconfirm base-devel git rust cargo gtk4 glib2
+          pacman -Syu --noconfirm base-devel git rust cargo gtk4 glib2 gtk4-layer-shell hicolor-icon-theme
           useradd -m builder
           git config --global --add safe.directory '*'
           git clone --branch "${GITHUB_REF_NAME}" --depth 1 \
