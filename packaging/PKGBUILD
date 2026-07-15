@@ -5,7 +5,7 @@ pkgver=0.1.0
 pkgrel=1
 pkgdesc="Onboarding and help center for Bread OS"
 arch=('x86_64')
-url="https://github.com/Breadway/bos"
+url="https://github.com/Breadway/breadhelp"
 license=('MIT')
 # Some Rust deps (ring/mlua) build vendored C/asm into static archives; makepkg's
 # default -flto=auto emits GCC LTO bitcode the Rust (lld) link cannot read,
@@ -21,20 +21,20 @@ sha256sums=('SKIP')
 
 build() {
   cd "${srcdir}/${pkgname}-${pkgver}"
-  cargo build --release --locked -p breadhelp
+  cargo build --release --locked
 }
 
 check() {
   cd "${srcdir}/${pkgname}-${pkgver}"
-  cargo test --release --locked -p breadhelp
+  cargo test --release --locked
 }
 
 package() {
   cd "${srcdir}/${pkgname}-${pkgver}"
   install -Dm755 target/release/breadhelp "${pkgdir}/usr/bin/breadhelp"
-  install -Dm644 packaging/arch/breadhelp/breadhelp.desktop \
+  install -Dm644 packaging/breadhelp.desktop \
     "${pkgdir}/usr/share/applications/breadhelp.desktop"
   install -d "${pkgdir}/usr/share/breadhelp"
-  cp -r breadhelp/content "${pkgdir}/usr/share/breadhelp/content"
+  cp -r content "${pkgdir}/usr/share/breadhelp/content"
   install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
