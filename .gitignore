@@ -2,6 +2,12 @@
 /target/
 **/*.pdb
 
+# makepkg local build artifacts
+packaging/pkg/
+packaging/src/
+packaging/*.tar.gz
+packaging/*.pkg.tar.zst
+
 # Editor / IDE
 .vscode/
 .idea/
