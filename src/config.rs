@@ -41,15 +41,34 @@ fn load_doc(path: &Path) -> DocumentMut {
 }
 
 fn save_doc(path: &Path, doc: &DocumentMut) {
-    if let Some(parent) = path.parent() {
-        if let Err(e) = std::fs::create_dir_all(parent) {
-            eprintln!("breadhelp: couldn't create {}: {e}", parent.display());
-            return;
-        }
-    }
-    if let Err(e) = std::fs::write(path, doc.to_string()) {
+    if let Err(e) = atomic_write(path, &doc.to_string()) {
         eprintln!("breadhelp: couldn't write {}: {e}", path.display());
     }
+}
+
+/// Write `contents` to `path` atomically, backing up whatever was there
+/// before overwriting it — same discipline as `bos-settings/src/config/
+/// mod.rs::atomic_write`. Writing straight to the target path means a
+/// crash, power loss, or disk-full error mid-write can leave `state.toml`
+/// truncated or corrupted with no way back. Writing to a temp file in the
+/// same directory first, then `rename`-ing it over the target, avoids
+/// that — a rename within one filesystem is atomic. Backing up the
+/// previous file first (best-effort) means even a successful-but-wrong
+/// write is always recoverable from `<path>.bak`.
+fn atomic_write(path: &Path, contents: &str) -> std::io::Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    if path.exists() {
+        let backup = PathBuf::from(format!("{}.bak", path.display()));
+        let _ = std::fs::copy(path, &backup);
+    }
+    let dir = path.parent().map(Path::to_path_buf).unwrap_or_else(|| PathBuf::from("."));
+    let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("config");
+    let tmp_path = dir.join(format!(".{file_name}.tmp.{}", std::process::id()));
+    std::fs::write(&tmp_path, contents)?;
+    std::fs::rename(&tmp_path, path)?;
+    Ok(())
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -157,5 +176,54 @@ impl State {
 
     fn save(&self) {
         save_doc(&self.path, &self.doc);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn atomic_write_backs_up_previous_contents_and_no_tmp_file_left_behind() {
+        let dir = std::env::temp_dir().join(format!("breadhelp-atomic-write-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("state.toml");
+        let backup = dir.join("state.toml.bak");
+
+        atomic_write(&path, "first").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "first");
+        assert!(!backup.exists(), "no backup should be made when there's nothing to back up yet");
+
+        atomic_write(&path, "second").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "second");
+        assert_eq!(std::fs::read_to_string(&backup).unwrap(), "first");
+
+        let leftover_tmp: Vec<_> = std::fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .filter(|n| n.contains(".tmp."))
+            .collect();
+        assert!(leftover_tmp.is_empty(), "temp file should be renamed away, not left behind: {leftover_tmp:?}");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn save_doc_then_load_doc_round_trips_state() {
+        let dir = std::env::temp_dir().join(format!("breadhelp-state-roundtrip-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("state.toml");
+
+        let mut doc = DocumentMut::default();
+        doc["onboarding"]["completed"] = value(true);
+        doc["general"]["mode"] = value("dad");
+        save_doc(&path, &doc);
+
+        let loaded = load_doc(&path);
+        assert_eq!(loaded.get("onboarding").and_then(|t| t.get("completed")).and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(loaded.get("general").and_then(|t| t.get("mode")).and_then(|v| v.as_str()), Some("dad"));
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
