@@ -46,8 +46,9 @@ pub struct LayerClient {
 }
 
 fn query_json(cmd: &str) -> Option<serde_json::Value> {
-    let output = Command::new("hyprctl").args(["-j", cmd]).output().ok()?;
-    output.status.success().then(|| serde_json::from_slice(&output.stdout).ok()).flatten()
+    // Timeout-guarded: an unresponsive hyprctl (Hyprland wedged/reloading)
+    // used to be able to block clients()/monitors()/layers() indefinitely.
+    bread_utils::proc::run_json("hyprctl", &["-j", cmd], std::time::Duration::from_secs(3))
 }
 
 pub fn clients() -> Vec<Client> {

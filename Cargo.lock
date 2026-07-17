@@ -38,11 +38,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bread-utils"
+version = "0.2.3"
+dependencies = [
+ "dirs",
+ "serde",
+ "serde_json",
+ "toml_edit 0.22.27",
+]
+
+[[package]]
 name = "breadhelp"
 version = "0.2.1"
 dependencies = [
  "async-channel",
  "bread-theme",
+ "bread-utils",
  "gdk4",
  "glib",
  "gtk4",

@@ -1,20 +1,16 @@
-//! `~/.config/breadhelp/state.toml` — non-destructive TOML editing, same
-//! `load_doc`/`save_doc` discipline as `bos-settings/src/config/mod.rs`: a
-//! missing file yields defaults, a file that exists but fails to parse is
-//! backed up once before falling back, so a bad edit is always recoverable.
+//! `~/.config/breadhelp/state.toml` — non-destructive TOML editing via
+//! `bread_utils::tomlcfg`, the same `load_doc`/`save_doc` discipline
+//! `bos-settings/src/config/mod.rs` uses: a missing file yields defaults, a
+//! file that exists but fails to parse is backed up once before falling
+//! back, so a bad edit is always recoverable. This module used to carry its
+//! own byte-for-byte copy of that logic (introduced in the same fix pass
+//! that added it to bos-settings) — now both share one implementation.
 
 use std::path::{Path, PathBuf};
 use toml_edit::{value, DocumentMut};
 
 pub fn config_dir() -> PathBuf {
-    if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
-        let p = PathBuf::from(xdg);
-        if p.is_absolute() {
-            return p;
-        }
-    }
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
-    PathBuf::from(home).join(".config")
+    bread_utils::xdg::config_home()
 }
 
 fn state_path() -> PathBuf {
@@ -22,53 +18,13 @@ fn state_path() -> PathBuf {
 }
 
 fn load_doc(path: &Path) -> DocumentMut {
-    let Ok(text) = std::fs::read_to_string(path) else {
-        return DocumentMut::default();
-    };
-    match text.parse::<DocumentMut>() {
-        Ok(doc) => doc,
-        Err(e) => {
-            let backup = PathBuf::from(format!("{}.bak", path.display()));
-            eprintln!(
-                "breadhelp: {} failed to parse ({e}); backed up to {} before falling back to defaults",
-                path.display(),
-                backup.display()
-            );
-            let _ = std::fs::write(&backup, &text);
-            DocumentMut::default()
-        }
-    }
+    bread_utils::tomlcfg::load_doc("breadhelp", path)
 }
 
 fn save_doc(path: &Path, doc: &DocumentMut) {
-    if let Err(e) = atomic_write(path, &doc.to_string()) {
+    if let Err(e) = bread_utils::tomlcfg::save_doc(path, doc) {
         eprintln!("breadhelp: couldn't write {}: {e}", path.display());
     }
-}
-
-/// Write `contents` to `path` atomically, backing up whatever was there
-/// before overwriting it — same discipline as `bos-settings/src/config/
-/// mod.rs::atomic_write`. Writing straight to the target path means a
-/// crash, power loss, or disk-full error mid-write can leave `state.toml`
-/// truncated or corrupted with no way back. Writing to a temp file in the
-/// same directory first, then `rename`-ing it over the target, avoids
-/// that — a rename within one filesystem is atomic. Backing up the
-/// previous file first (best-effort) means even a successful-but-wrong
-/// write is always recoverable from `<path>.bak`.
-fn atomic_write(path: &Path, contents: &str) -> std::io::Result<()> {
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-    if path.exists() {
-        let backup = PathBuf::from(format!("{}.bak", path.display()));
-        let _ = std::fs::copy(path, &backup);
-    }
-    let dir = path.parent().map(Path::to_path_buf).unwrap_or_else(|| PathBuf::from("."));
-    let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("config");
-    let tmp_path = dir.join(format!(".{file_name}.tmp.{}", std::process::id()));
-    std::fs::write(&tmp_path, contents)?;
-    std::fs::rename(&tmp_path, path)?;
-    Ok(())
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -184,17 +140,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn atomic_write_backs_up_previous_contents_and_no_tmp_file_left_behind() {
+    fn state_toml_write_backs_up_previous_contents_and_no_tmp_file_left_behind() {
+        // Exercises the same bread_utils::atomic::write_atomic_backed_up
+        // path save_doc uses (via tomlcfg::save_doc), at the file-layout
+        // breadhelp actually writes to — the deeper backup/no-leftover-tmp
+        // behavior itself is covered by bread-utils' own test suite.
         let dir = std::env::temp_dir().join(format!("breadhelp-atomic-write-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("state.toml");
         let backup = dir.join("state.toml.bak");
 
-        atomic_write(&path, "first").unwrap();
+        bread_utils::atomic::write_atomic_backed_up(&path, "first").unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "first");
         assert!(!backup.exists(), "no backup should be made when there's nothing to back up yet");
 
-        atomic_write(&path, "second").unwrap();
+        bread_utils::atomic::write_atomic_backed_up(&path, "second").unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "second");
         assert_eq!(std::fs::read_to_string(&backup).unwrap(), "first");
 
