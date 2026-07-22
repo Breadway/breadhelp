@@ -38,3 +38,6 @@ logs/
 
 # Claude Code local agent state
 .claude/
+
+# Local hygiene notes (not for commit)
+CLAUDE.md
