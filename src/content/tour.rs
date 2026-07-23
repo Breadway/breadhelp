@@ -86,15 +86,26 @@ struct TourFile {
 }
 
 const SYSTEM_TOUR_PATH: &str = "/usr/share/breadhelp/content/tours/onboarding.toml";
+const TOUR_SUBPATH: &str = "tours/onboarding.toml";
 
+/// Checks the user content root first (where bakery installs content —
+/// see `content::user_content_root`), falling back to the system path a
+/// pacman package would have used. Same "user copy wins" precedent as
+/// `ContentStore::load`.
 pub fn load() -> Vec<Step> {
-    let Ok(text) = std::fs::read_to_string(Path::new(SYSTEM_TOUR_PATH)) else {
+    let user_path = super::user_content_root().join(TOUR_SUBPATH);
+    let path = if user_path.exists() {
+        user_path
+    } else {
+        Path::new(SYSTEM_TOUR_PATH).to_path_buf()
+    };
+    let Ok(text) = std::fs::read_to_string(&path) else {
         return Vec::new();
     };
     match toml::from_str::<TourFile>(&text) {
         Ok(f) => f.steps,
         Err(e) => {
-            eprintln!("breadhelp: {SYSTEM_TOUR_PATH} failed to parse: {e}");
+            eprintln!("breadhelp: {} failed to parse: {e}", path.display());
             Vec::new()
         }
     }

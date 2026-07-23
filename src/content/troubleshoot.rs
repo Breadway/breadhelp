@@ -36,13 +36,11 @@ struct SymptomFile {
 }
 
 const SYSTEM_SYMPTOMS_DIR: &str = "/usr/share/breadhelp/content/troubleshooting/_symptoms";
+const SYMPTOMS_SUBPATH: &str = "troubleshooting/_symptoms";
 
-/// Loads every `*.toml` file in the symptoms directory, keyed by file stem so
-/// a `SymptomOption::goto` of `"no-sound:check-mute"` can be resolved.
-pub fn load_all() -> std::collections::HashMap<String, Vec<SymptomNode>> {
-    let mut out = std::collections::HashMap::new();
-    let Ok(entries) = std::fs::read_dir(Path::new(SYSTEM_SYMPTOMS_DIR)) else {
-        return out;
+fn scan_symptoms_dir(dir: &Path, out: &mut std::collections::HashMap<String, Vec<SymptomNode>>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
     };
     for entry in entries.flatten() {
         let path = entry.path();
@@ -62,5 +60,16 @@ pub fn load_all() -> std::collections::HashMap<String, Vec<SymptomNode>> {
             Err(e) => eprintln!("breadhelp: {} failed to parse: {e}", path.display()),
         }
     }
+}
+
+/// Loads every `*.toml` file in the symptoms directory, keyed by file stem so
+/// a `SymptomOption::goto` of `"no-sound:check-mute"` can be resolved. Scans
+/// the system path (a pacman package's location) then the user content root
+/// (where bakery installs content — see `content::user_content_root`) —
+/// same "user copy wins on collision" precedent as `ContentStore::load`.
+pub fn load_all() -> std::collections::HashMap<String, Vec<SymptomNode>> {
+    let mut out = std::collections::HashMap::new();
+    scan_symptoms_dir(Path::new(SYSTEM_SYMPTOMS_DIR), &mut out);
+    scan_symptoms_dir(&super::user_content_root().join(SYMPTOMS_SUBPATH), &mut out);
     out
 }

@@ -41,7 +41,7 @@ pub struct ContentStore {
     guides: Vec<Guide>,
 }
 
-fn user_content_root() -> PathBuf {
+pub(crate) fn user_content_root() -> PathBuf {
     if let Ok(xdg) = std::env::var("XDG_DATA_HOME") {
         let p = PathBuf::from(xdg);
         if p.is_absolute() {
