@@ -25,10 +25,39 @@ pub struct Action {
     /// Only acted on if a tour is currently waiting for this exact id —
     /// see the crash-safety note on `ui::tour`.
     pub tour_event: Option<String>,
+    /// Render the named tab, capture it, then exit instead of running
+    /// normally. Known views: "home", "learn", "ask". See `crate::screenshot`.
+    pub screenshot: Option<String>,
+    /// PNG path to write the capture to. Required together with `screenshot`.
+    pub output: Option<String>,
+    /// Capture canvas width — matches the isolated compositor's output
+    /// width (`bread-capture --isolate-width`).
+    pub width: u32,
+    /// Capture canvas height — see `width`.
+    pub height: u32,
+}
+
+impl Action {
+    /// `None` for a normal run. Exits the process with an error if
+    /// `--screenshot` was given without `--output`, before any GTK setup
+    /// happens.
+    pub fn screenshot_request(&self) -> Option<crate::screenshot::ScreenshotRequest> {
+        let view = self.screenshot.clone()?;
+        let Some(output) = self.output.clone() else {
+            eprintln!("breadhelp: --screenshot requires --output");
+            std::process::exit(1);
+        };
+        Some(crate::screenshot::ScreenshotRequest {
+            view,
+            output: output.into(),
+            width: self.width,
+            height: self.height,
+        })
+    }
 }
 
 pub fn parse(args: &[std::ffi::OsString]) -> Action {
-    let mut action = Action::default();
+    let mut action = Action { width: 1920, height: 1080, ..Action::default() };
     let mut it = args.iter().skip(1);
     while let Some(arg) = it.next() {
         if arg == "--onboard" {
@@ -39,6 +68,18 @@ pub fn parse(args: &[std::ffi::OsString]) -> Action {
             action.suggest = it.next().and_then(|s| s.to_str()).map(str::to_string);
         } else if arg == "--tour-event" {
             action.tour_event = it.next().and_then(|s| s.to_str()).map(str::to_string);
+        } else if arg == "--screenshot" {
+            action.screenshot = it.next().and_then(|s| s.to_str()).map(str::to_string);
+        } else if arg == "--output" {
+            action.output = it.next().and_then(|s| s.to_str()).map(str::to_string);
+        } else if arg == "--width" {
+            if let Some(v) = it.next().and_then(|s| s.to_str()).and_then(|s| s.parse().ok()) {
+                action.width = v;
+            }
+        } else if arg == "--height" {
+            if let Some(v) = it.next().and_then(|s| s.to_str()).and_then(|s| s.parse().ok()) {
+                action.height = v;
+            }
         }
     }
     action

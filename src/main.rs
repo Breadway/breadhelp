@@ -1,6 +1,7 @@
 mod cli;
 mod config;
 mod content;
+mod screenshot;
 mod services;
 mod theme;
 mod ui;
@@ -19,9 +20,17 @@ fn main() {
     // reach the running (primary) instance's argv, not just re-activate it
     // with no arguments — that's what lets a second launch re-trigger the
     // onboarding tour instead of only focusing the window.
+    let mut flags = ApplicationFlags::HANDLES_COMMAND_LINE;
+    if std::env::args().any(|a| a == "--screenshot") {
+        // Without this, a screenshot run would be forwarded over D-Bus to
+        // the real, already-running breadhelp instead of starting a fresh
+        // one — reusing (and mutating the tab of) the operator's actual
+        // help-center window instead of a disposable one.
+        flags |= ApplicationFlags::NON_UNIQUE;
+    }
     let app = gtk4::Application::builder()
         .application_id("com.breadway.breadhelp")
-        .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
+        .flags(flags)
         .build();
 
     app.connect_command_line(|app, cmdline| {

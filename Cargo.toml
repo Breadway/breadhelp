@@ -18,3 +18,7 @@ toml = "0.8"
 toml_edit = "0.22"
 async-channel = "2"
 bread-utils = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", tag = "v0.3.0", features = ["toml"] }
+# Capture primitives for `--screenshot` mode — see src/screenshot.rs. Not
+# tag-pinned like the deps above since it doesn't have a tagged release yet.
+bread-screenshots = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", branch = "dev" }
+anyhow = "1"

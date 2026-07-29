@@ -16,6 +16,7 @@ const DEFAULT_TAB: &str = "home";
 struct Handle {
     window: ApplicationWindow,
     home: Home,
+    stack: Stack,
 }
 
 thread_local! {
@@ -38,6 +39,11 @@ pub fn present(app: &Application, action: Action) {
         let cell_ref = cell.borrow();
         let handle = cell_ref.as_ref().unwrap();
         let display = WidgetExt::display(&handle.window);
+
+        if let Some(req) = action.screenshot_request() {
+            crate::screenshot::dispatch(&handle.window, &handle.stack, req);
+            return;
+        }
 
         if action.force_onboard {
             tour::restart(&display);
@@ -131,5 +137,5 @@ fn build(app: &Application) -> Handle {
     // independently of this window (see `tour::start`) — it never needs to
     // be shown at all until the user explicitly opens it later.
 
-    Handle { window, home }
+    Handle { window, home, stack }
 }
