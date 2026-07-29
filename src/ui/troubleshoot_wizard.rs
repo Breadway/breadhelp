@@ -25,7 +25,11 @@ struct Wizard {
     trees: HashMap<String, Vec<SymptomNode>>,
 }
 
-pub fn open(parent: &impl IsA<gtk4::Window>) {
+/// `on_build` runs on the freshly built window *before* it's presented —
+/// screenshot mode's only hook point, since `connect_map` registered any
+/// later would miss a map that already happened. The real call site
+/// (`ui::home`) passes a no-op.
+pub fn open(parent: &impl IsA<gtk4::Window>, on_build: impl FnOnce(&Window)) {
     let window = Window::builder()
         .transient_for(parent)
         .modal(true)
@@ -41,6 +45,7 @@ pub fn open(parent: &impl IsA<gtk4::Window>) {
     wizard.render_picker();
 
     window.set_child(Some(&content));
+    on_build(&window);
     window.present();
 }
 

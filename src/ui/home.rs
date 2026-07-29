@@ -83,7 +83,7 @@ pub fn build(
     troubleshoot_btn.set_halign(Align::Start);
     {
         let parent = parent_window.clone();
-        troubleshoot_btn.connect_clicked(move |_| troubleshoot_wizard::open(&parent));
+        troubleshoot_btn.connect_clicked(move |_| troubleshoot_wizard::open(&parent, |_| {}));
     }
     vbox.append(&troubleshoot_btn);
 
