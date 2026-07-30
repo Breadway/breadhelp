@@ -53,6 +53,22 @@ window.tour-window { background-color: transparent; }\n\
    the \"Show me\" fallback as its own beat, not a continuation of the \
    instructional paragraph above it. */\n\
 .tour-hint-row { margin-top: 8px; }\n\
+/* ui::troubleshoot_wizard — a bare gtk4::Window with no titlebar falls back \
+   to GTK's own minimal CSD (flat bar, plain system-font title, square \
+   corners), which read as a stray window from a different decade next to \
+   the rest of this (rounded, borderless) app. A real HeaderBar (set in \
+   troubleshoot_wizard::open) picks up the window's title automatically; \
+   this just makes it and the window match the shared dark theme instead \
+   of GTK's default light-grey CSD chrome. */\n\
+window.wizard-dialog { background-color: @bg; color: @on-bg; border-radius: 10px; }\n\
+window.wizard-dialog headerbar { \
+  background-color: @bg; \
+  color: @on-bg; \
+  border-top-left-radius: 10px; \
+  border-top-right-radius: 10px; \
+  border-bottom: 1px solid alpha(@on-bg, 0.08); \
+  box-shadow: none; \
+}\n\
 ";
 
 thread_local! {
