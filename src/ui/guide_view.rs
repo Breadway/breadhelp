@@ -8,7 +8,7 @@ pub fn build(store: &ContentStore, guide: &Guide, simplified: bool, binds: &[Key
     vbox.add_css_class("view-content");
 
     let title = Label::new(Some(&guide.meta.title));
-    title.add_css_class("title");
+    title.add_css_class("page-title");
     title.set_xalign(0.0);
     vbox.append(&title);
 

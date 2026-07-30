@@ -72,7 +72,7 @@ pub fn build(
     root.set_size_request(CALLOUT_WIDTH, -1);
 
     let title = Label::new(Some(&step.title));
-    title.add_css_class("title");
+    title.add_css_class("page-title");
     title.set_xalign(0.0);
     title.set_wrap(true);
     root.append(&title);

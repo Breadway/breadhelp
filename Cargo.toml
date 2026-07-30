@@ -9,8 +9,10 @@ gdk4 = "0.11"
 gtk4-layer-shell = "0.8"
 glib = "0.22"
 # Shared ecosystem theming — same generated stylesheet bos-settings/breadbar/
-# breadbox/breadpad load, so this looks like part of the same desktop.
-bread-theme = { git = "https://github.com/Breadway/bread-ecosystem", tag = "v0.2.10", features = ["gtk"] }
+# breadbox/breadpad load, so this looks like part of the same desktop. Pinned
+# to dev (not a tag) for the .title -> .page-title rename, which doesn't have
+# a tagged release yet.
+bread-theme = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", branch = "dev", features = ["gtk"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.8"

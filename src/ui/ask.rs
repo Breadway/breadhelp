@@ -148,7 +148,7 @@ pub fn build(store: Rc<ContentStore>, binds: Rc<Vec<Keybind>>, mode: Mode) -> Wi
             }
             Kind::Command { name, description } => {
                 let title = Label::new(Some(name));
-                title.add_css_class("title");
+                title.add_css_class("page-title");
                 title.set_xalign(0.0);
                 detail.append(&title);
 
