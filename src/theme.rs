@@ -10,7 +10,7 @@ use std::cell::RefCell;
 
 const APP_CSS: &str = "\
 .view-content { padding: 24px; }\n\
-.view-content > label.title { margin-bottom: 16px; }\n\
+.view-content > label.page-title { margin-bottom: 16px; }\n\
 /* [Show Keybind] chip: reads as a keycap inline with guide/keybind-viewer text. */\n\
 label.keybind-chip { \
   font-family: monospace; \
@@ -44,7 +44,7 @@ window.tour-window { background-color: transparent; }\n\
   border-radius: 12px; \
   padding: 16px 20px; \
 }\n\
-.tour-callout label.title { font-weight: bold; font-size: 15px; }\n\
+.tour-callout label.page-title { font-weight: bold; font-size: 15px; }\n\
 /* The one payoff line in the whole tour — the user did the real thing and \
    the compositor proved it — shouldn't read as the same throwaway meta \
    text as the step counter. */\n\

@@ -47,7 +47,7 @@ pub fn build(
 
     let header = GBox::new(Orientation::Horizontal, 12);
     let title = Label::new(Some("Home"));
-    title.add_css_class("title");
+    title.add_css_class("page-title");
     title.set_xalign(0.0);
     title.set_hexpand(true);
     header.append(&title);

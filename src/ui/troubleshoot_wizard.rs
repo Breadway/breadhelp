@@ -64,7 +64,7 @@ impl Wizard {
         self.clear();
 
         let title = Label::new(Some("What's wrong?"));
-        title.add_css_class("title");
+        title.add_css_class("page-title");
         title.set_xalign(0.0);
         self.content.append(&title);
 

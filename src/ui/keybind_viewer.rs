@@ -7,7 +7,7 @@ pub fn build(binds: &[Keybind]) -> gtk4::Widget {
     let vbox = GBox::new(Orientation::Vertical, 6);
 
     let header = Label::new(Some("Keybinds"));
-    header.add_css_class("title");
+    header.add_css_class("page-title");
     header.set_xalign(0.0);
     vbox.append(&header);
 
