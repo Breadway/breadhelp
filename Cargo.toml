@@ -12,7 +12,7 @@ glib = "0.22"
 # breadbox/breadpad load, so this looks like part of the same desktop. Pinned
 # to dev (not a tag) for the .title -> .page-title rename, which doesn't have
 # a tagged release yet.
-bread-theme = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", branch = "dev", features = ["gtk"] }
+bread-theme = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", branch = "main", features = ["gtk"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.8"
@@ -22,5 +22,5 @@ async-channel = "2"
 bread-utils = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", tag = "v0.3.0", features = ["toml"] }
 # Capture primitives for `--screenshot` mode — see src/screenshot.rs. Not
 # tag-pinned like the deps above since it doesn't have a tagged release yet.
-bread-screenshots = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", branch = "dev" }
+bread-screenshots = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", branch = "main" }
 anyhow = "1"
