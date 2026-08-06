@@ -15,6 +15,11 @@ pub struct SymptomOption {
 pub struct Fix {
     pub description: String,
     pub command: String,
+    /// Not read by `ui::troubleshoot_wizard` yet — the "Run fix" button
+    /// currently executes unconditionally regardless of this flag. Real
+    /// symptom content already sets it, so kept rather than dropped; the
+    /// wizard should gate on it before this is treated as safe.
+    #[allow(dead_code)]
     #[serde(default)]
     pub requires_confirm: bool,
 }

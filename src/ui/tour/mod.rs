@@ -110,7 +110,7 @@ pub fn self_heal() {
 pub fn on_tour_event(id: &str) {
     let hit = STATE.with(|cell| {
         let mut borrow = cell.borrow_mut();
-        let Some(state) = borrow.as_mut() else { return None };
+        let state = borrow.as_mut()?;
         // Only a *visibly* confirmed step blocks a re-fire. `confirmed` gets
         // set below, before `render_step` runs, so that render actually
         // paints the "done" state instead of the stale pre-confirmation one

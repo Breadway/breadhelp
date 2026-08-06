@@ -29,6 +29,10 @@ pub enum Success {
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Step {
+    /// Not read by any Rust code yet — steps are matched by index, not id.
+    /// Real tour content already sets it (content authors use it to keep
+    /// track of steps), so kept rather than dropped.
+    #[allow(dead_code)]
     pub id: String,
     pub title: String,
     pub body: String,
