@@ -13,3 +13,8 @@ cargo build --release
 ## Packaging / releasing
 
 See `CONTRIBUTING.md` for the single-trunk + tag model. `main` publishes a bakery **dev** build; a `vX.Y.Z-rc.N` tag publishes **beta**; a `vX.Y.Z` tag publishes **stable**. The leftover `packaging/` tree is not a pacman source — bakery is canonical (see `packaging/README.md`).
+
+## bread event integration
+
+Works the same with or without `breadd`. When the main window is shown,
+breadhelp publishes `bread.help.opened`. See [EVENTS.md](EVENTS.md).

@@ -1,6 +1,23 @@
-//! Maps a `--suggest <id>` payload (sent by a breadd Lua module, e.g.
-//! `breadhelp-suggest.lua` reacting to `bread.monitor.connected`) to Home
-//! tab banner text.
+//! Bread bus integration. `--suggest` banners stay local; `bread.help.*`
+//! emits are optional and fail-silent. See `EVENTS.md`.
+//!
+//! `BreadClient::emit` never blocks or errors this process — a missing or
+//! restarting breadd must not affect the help center itself.
+
+use bread_utils::bread_client::BreadClient;
+
+/// Sibling-app id in `bread_shared::apps::KNOWN_APPS`. Events publish as
+/// `bread.help.*`. There is no command subscription.
+pub const APP_ID: &str = "help";
+
+/// Fire-and-forget `bread.help.opened` after the main window is actually
+/// shown. Silent autostart (window built, not presented) does not call this.
+pub fn emit_opened(autostart: bool) {
+    BreadClient::connect(APP_ID).emit(
+        "bread.help.opened",
+        serde_json::json!({ "autostart": autostart }),
+    );
+}
 
 pub struct Suggestion {
     pub text: String,

@@ -63,7 +63,7 @@ pub fn present(app: &Application, action: Action) {
             // (i.e. breadhelp wasn't already running) — a background daemon
             // event shouldn't steal focus from whatever the user is doing.
             if just_built {
-                handle.window.present();
+                show_window(&handle.window, action.autostart);
             }
             return;
         }
@@ -77,9 +77,17 @@ pub fn present(app: &Application, action: Action) {
         }
         let silent_autostart = action.autostart && State::load().onboarding_completed();
         if !silent_autostart {
-            handle.window.present();
+            show_window(&handle.window, action.autostart);
         }
     });
+}
+
+/// Present the help window and publish `bread.help.opened`. Screenshot
+/// mode calls `window.present()` itself and must not go through here —
+/// that is capture, not a user-visible open.
+fn show_window(window: &ApplicationWindow, autostart: bool) {
+    window.present();
+    crate::services::breadd::emit_opened(autostart);
 }
 
 fn build(app: &Application) -> Handle {
