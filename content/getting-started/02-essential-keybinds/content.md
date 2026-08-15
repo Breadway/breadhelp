@@ -13,9 +13,16 @@ nothing here is mandatory either, click around if you'd rather.
 ## Apps
 
 - [Show Keybind]super + space[/Show Keybind] opens the launcher (breadbox)
-- [Show Keybind]super + e[/Show Keybind] opens files
+- [Show Keybind]super + e[/Show Keybind] opens files (nautilus)
 - [Show Keybind]super + b[/Show Keybind] opens the browser
 - [Show Keybind]super + u[/Show Keybind] opens notes
+- [Show Keybind]super + l[/Show Keybind] locks the screen
+
+## Screenshots
+
+- [Show Keybind]super + shift + s[/Show Keybind] captures a region to a file (breadshot)
+- [Show Keybind]super + shift + c[/Show Keybind] captures a region to the clipboard (breadshot)
+- [Show Keybind]super + shift + p[/Show Keybind] captures the active screen to a file (breadshot)
 
 ## The full list
 
