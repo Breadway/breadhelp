@@ -4,7 +4,10 @@
 //! `connect_command_line`, so `--onboard` on a second launch re-triggers the
 //! tour in the existing window instead of spawning a duplicate.
 
-#[derive(Clone, Default)]
+use bread_utils::screenshot_cli::{validate_pair, DEFAULT_HEIGHT, DEFAULT_WIDTH};
+use std::path::Path;
+
+#[derive(Clone)]
 pub struct Action {
     /// Force-restart the onboarding tour from step 0, regardless of whether
     /// it was already completed or in progress.
@@ -38,19 +41,36 @@ pub struct Action {
     pub height: u32,
 }
 
+impl Default for Action {
+    fn default() -> Self {
+        Self {
+            force_onboard: false,
+            autostart: false,
+            suggest: None,
+            tour_event: None,
+            screenshot: None,
+            output: None,
+            width: DEFAULT_WIDTH,
+            height: DEFAULT_HEIGHT,
+        }
+    }
+}
+
 impl Action {
-    /// `None` for a normal run. Exits the process with an error if
-    /// `--screenshot` was given without `--output`, before any GTK setup
+    /// `None` for a normal run. Exits the process with an error if the
+    /// `--screenshot` / `--output` pair is incomplete, before any GTK setup
     /// happens.
     pub fn screenshot_request(&self) -> Option<crate::screenshot::ScreenshotRequest> {
-        let view = self.screenshot.clone()?;
-        let Some(output) = self.output.clone() else {
-            eprintln!("breadhelp: --screenshot requires --output");
+        if let Err(e) = validate_pair(
+            self.screenshot.as_deref(),
+            self.output.as_deref().map(Path::new),
+        ) {
+            eprintln!("breadhelp: {e}");
             std::process::exit(1);
-        };
+        }
         Some(crate::screenshot::ScreenshotRequest {
-            view,
-            output: output.into(),
+            view: self.screenshot.clone()?,
+            output: self.output.clone()?.into(),
             width: self.width,
             height: self.height,
         })
@@ -58,7 +78,7 @@ impl Action {
 }
 
 pub fn parse(args: &[std::ffi::OsString]) -> Action {
-    let mut action = Action { width: 1920, height: 1080, ..Action::default() };
+    let mut action = Action::default();
     let mut it = args.iter().skip(1);
     while let Some(arg) = it.next() {
         if arg == "--onboard" {

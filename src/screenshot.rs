@@ -21,19 +21,15 @@
 //! both render embedded *inside* the Learn/Home tabs respectively, so
 //! they're already covered by those tabs' own captures.
 
+use bread_utils::screenshot_cli::SETTLE_DELAY;
 use gtk4::prelude::*;
 use std::path::PathBuf;
 use std::time::Duration;
 
-/// Extra settle time after `map` for the first frame to actually paint
-/// before grim runs — `map` fires once the surface exists, not once
-/// anything has been drawn into it.
-const SETTLE_DELAY: Duration = Duration::from_millis(300);
-
 /// Delay before opening the wizard modal — same reasoning as every other
 /// app's PRE_POPUP_DELAY: the parent window's own layout needs a beat to
 /// settle first.
-const PRE_POPUP_DELAY: Duration = Duration::from_millis(300);
+const PRE_POPUP_DELAY: Duration = SETTLE_DELAY;
 
 const KNOWN_VIEWS: &[&str] = &["home", "learn", "ask", "troubleshoot-wizard"];
 
