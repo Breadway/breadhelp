@@ -40,4 +40,3 @@ logs/
 .claude/
 
 # Local hygiene notes (not for commit)
-CLAUDE.md
