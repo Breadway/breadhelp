@@ -6,10 +6,11 @@ use gtk4::{Application, ApplicationWindow, Box as GBox, Orientation, Stack, Stac
 
 use crate::cli::Action;
 use crate::config::State;
+use crate::content::keybinds::Keybind;
 use crate::content::{keybinds, ContentStore};
 
 use super::home::Home;
-use super::{ask, learn, modes, tabs, tour};
+use super::{ask, day_zero, learn, modes, tabs, tour};
 
 const DEFAULT_TAB: &str = "home";
 
@@ -17,6 +18,8 @@ struct Handle {
     window: ApplicationWindow,
     home: Home,
     stack: Stack,
+    store: Rc<ContentStore>,
+    binds: Rc<Vec<Keybind>>,
 }
 
 thread_local! {
@@ -69,16 +72,39 @@ pub fn present(app: &Application, action: Action) {
         }
 
         // Every-login autostart builds the window (so the app is ready to
-        // respond to SUPER+/ instantly) but only starts the tour / pops the
-        // window open on a genuine first run — never on later logins.
-        if action.autostart && !State::load().onboarding_completed() {
+        // respond to SUPER+/ instantly) but only shows UI on a genuine
+        // first run — never on later logins. First run is now the in-window
+        // day-zero wizard; the live tour starts when that finishes.
+        let onboarded = State::load().onboarding_completed();
+        if action.autostart && onboarded {
+            return;
+        }
+
+        if day_zero::needs_wizard() {
+            let stack = handle.stack.clone();
+            let display = display.clone();
+            day_zero::attach(&handle.stack, &handle.store, &handle.binds, move || {
+                // Drop the Welcome tab after the click handler returns —
+                // removing it here would destroy the Skip/Finish button
+                // mid-signal.
+                let stack = stack.clone();
+                let display = display.clone();
+                glib::idle_add_local_once(move || {
+                    day_zero::detach(&stack);
+                    if !State::load().onboarding_completed() {
+                        tour::start(&display);
+                    }
+                });
+            });
+            show_window(&handle.window, action.autostart);
+            return;
+        }
+
+        if action.autostart && !onboarded {
             tour::start(&display);
             return;
         }
-        let silent_autostart = action.autostart && State::load().onboarding_completed();
-        if !silent_autostart {
-            show_window(&handle.window, action.autostart);
-        }
+        show_window(&handle.window, action.autostart);
     });
 }
 
@@ -126,8 +152,16 @@ fn build(app: &Application) -> Handle {
         }
     });
     stack.add_titled(&home.root, Some("home"), "Home");
-    stack.add_titled(&learn::build(&store, &binds, state.mode()), Some("learn"), "Learn");
-    stack.add_titled(&ask::build(store.clone(), binds.clone(), state.mode()), Some("ask"), "Ask");
+    stack.add_titled(
+        &learn::build(&store, &binds, state.mode()),
+        Some("learn"),
+        "Learn",
+    );
+    stack.add_titled(
+        &ask::build(store.clone(), binds.clone(), state.mode()),
+        Some("ask"),
+        "Ask",
+    );
     stack.set_visible_child_name(DEFAULT_TAB);
 
     let switcher = tabs::build(&stack);
@@ -138,12 +172,17 @@ fn build(app: &Application) -> Handle {
 
     window.set_child(Some(&content_vbox));
     // Deliberately not presented here — `present()` (the caller) decides
-    // whether this initial build should actually be shown (see
-    // `silent_autostart` above), so a from-cold every-login autostart with
-    // onboarding already complete builds a ready-but-hidden window instead
-    // of flashing it open. On a genuine first run, the tour overlay runs
-    // independently of this window (see `tour::start`) — it never needs to
-    // be shown at all until the user explicitly opens it later.
+    // whether this initial build should actually be shown, so a from-cold
+    // every-login autostart with onboarding already complete builds a
+    // ready-but-hidden window instead of flashing it open. First run
+    // presents the window with the day-zero wizard; the tour overlay
+    // starts after that finishes.
 
-    Handle { window, home, stack }
+    Handle {
+        window,
+        home,
+        stack,
+        store,
+        binds,
+    }
 }

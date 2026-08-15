@@ -25,8 +25,9 @@ Not emitted when:
 
 - every-login `--autostart` builds a hidden window because onboarding is
   already done (silent autostart)
-- first-run `--autostart` starts the tour overlay without presenting the
-  main window
+- first-run `--autostart` presents the main window on the day-zero
+  wizard; the tour overlay starts after that wizard finishes (or is
+  skipped). `bread.help.opened` **is** emitted for that first-run present.
 - `--onboard` / `--tour-event` (tour only)
 - `--screenshot` (capture, not a user-visible open)
 

@@ -14,7 +14,8 @@ pub struct Action {
     /// `present()` build the window (so the app is ready to respond the
     /// instant it's needed) without popping it open when onboarding is
     /// already done — autostart should only be visible on a genuine first
-    /// run, never on every subsequent login.
+    /// run (day-zero wizard, then the desktop tour), never on every
+    /// subsequent login.
     pub autostart: bool,
     /// From a breadd Lua module (e.g. `breadhelp-suggest.lua`) reacting to a
     /// system event. Resolved to banner text by `services::breadd::resolve`.

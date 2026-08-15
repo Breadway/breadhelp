@@ -86,11 +86,57 @@ impl State {
     }
 
     pub fn onboarding_step(&self) -> i64 {
-        self.doc.get("onboarding").and_then(|t| t.get("step")).and_then(|v| v.as_integer()).unwrap_or(0)
+        self.doc
+            .get("onboarding")
+            .and_then(|t| t.get("step"))
+            .and_then(|v| v.as_integer())
+            .unwrap_or(0)
     }
 
     pub fn set_onboarding_step(&mut self, step: i64) {
         self.doc["onboarding"]["step"] = value(step);
+        self.save();
+    }
+
+    /// First-boot day-zero wizard (timezone / network hint / updates /
+    /// snapshot). Independent of the live desktop tour so an existing user
+    /// who already finished onboarding is never pulled back into setup.
+    pub fn day_zero_completed(&self) -> bool {
+        self.doc
+            .get("day_zero")
+            .and_then(|t| t.get("completed"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
+
+    pub fn set_day_zero_completed(&mut self, completed: bool) {
+        self.doc["day_zero"]["completed"] = value(completed);
+        self.save();
+    }
+
+    pub fn day_zero_step(&self) -> i64 {
+        self.doc
+            .get("day_zero")
+            .and_then(|t| t.get("step"))
+            .and_then(|v| v.as_integer())
+            .unwrap_or(0)
+    }
+
+    pub fn set_day_zero_step(&mut self, step: i64) {
+        self.doc["day_zero"]["step"] = value(step);
+        self.save();
+    }
+
+    pub fn day_zero_snapshot_attempted(&self) -> bool {
+        self.doc
+            .get("day_zero")
+            .and_then(|t| t.get("snapshot_attempted"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
+
+    pub fn set_day_zero_snapshot_attempted(&mut self, attempted: bool) {
+        self.doc["day_zero"]["snapshot_attempted"] = value(attempted);
         self.save();
     }
 
@@ -101,8 +147,18 @@ impl State {
     /// pointing at a chained `--tour-event` ping and self-heals it before
     /// the user can be surprised by a stray tour popup — see `ui::tour`.
     pub fn pending_rebind(&self) -> Option<(String, String)> {
-        let key = self.doc.get("tour")?.get("pending_rebind_key")?.as_str()?.to_string();
-        let original = self.doc.get("tour")?.get("pending_rebind_original")?.as_str()?.to_string();
+        let key = self
+            .doc
+            .get("tour")?
+            .get("pending_rebind_key")?
+            .as_str()?
+            .to_string();
+        let original = self
+            .doc
+            .get("tour")?
+            .get("pending_rebind_original")?
+            .as_str()?
+            .to_string();
         Some((key, original))
     }
 
@@ -121,7 +177,12 @@ impl State {
     }
 
     pub fn mode(&self) -> Mode {
-        let s = self.doc.get("general").and_then(|t| t.get("mode")).and_then(|v| v.as_str()).unwrap_or("normal");
+        let s = self
+            .doc
+            .get("general")
+            .and_then(|t| t.get("mode"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("normal");
         Mode::from_str(s)
     }
 
@@ -145,14 +206,20 @@ mod tests {
         // path save_doc uses (via tomlcfg::save_doc), at the file-layout
         // breadhelp actually writes to — the deeper backup/no-leftover-tmp
         // behavior itself is covered by bread-utils' own test suite.
-        let dir = std::env::temp_dir().join(format!("breadhelp-atomic-write-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "breadhelp-atomic-write-test-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("state.toml");
         let backup = dir.join("state.toml.bak");
 
         bread_utils::atomic::write_atomic_backed_up(&path, "first").unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "first");
-        assert!(!backup.exists(), "no backup should be made when there's nothing to back up yet");
+        assert!(
+            !backup.exists(),
+            "no backup should be made when there's nothing to back up yet"
+        );
 
         bread_utils::atomic::write_atomic_backed_up(&path, "second").unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "second");
@@ -164,14 +231,20 @@ mod tests {
             .map(|e| e.file_name().to_string_lossy().into_owned())
             .filter(|n| n.contains(".tmp."))
             .collect();
-        assert!(leftover_tmp.is_empty(), "temp file should be renamed away, not left behind: {leftover_tmp:?}");
+        assert!(
+            leftover_tmp.is_empty(),
+            "temp file should be renamed away, not left behind: {leftover_tmp:?}"
+        );
 
         let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn save_doc_then_load_doc_round_trips_state() {
-        let dir = std::env::temp_dir().join(format!("breadhelp-state-roundtrip-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "breadhelp-state-roundtrip-test-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("state.toml");
 
@@ -181,8 +254,50 @@ mod tests {
         save_doc(&path, &doc);
 
         let loaded = load_doc(&path);
-        assert_eq!(loaded.get("onboarding").and_then(|t| t.get("completed")).and_then(|v| v.as_bool()), Some(true));
-        assert_eq!(loaded.get("general").and_then(|t| t.get("mode")).and_then(|v| v.as_str()), Some("dad"));
+        assert_eq!(
+            loaded
+                .get("onboarding")
+                .and_then(|t| t.get("completed"))
+                .and_then(|v| v.as_bool()),
+            Some(true)
+        );
+        assert_eq!(
+            loaded
+                .get("general")
+                .and_then(|t| t.get("mode"))
+                .and_then(|v| v.as_str()),
+            Some("dad")
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn day_zero_defaults_incomplete_and_round_trips() {
+        let dir =
+            std::env::temp_dir().join(format!("breadhelp-day-zero-state-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("state.toml");
+
+        let mut state = State {
+            doc: DocumentMut::default(),
+            path: path.clone(),
+        };
+        assert!(!state.day_zero_completed());
+        assert_eq!(state.day_zero_step(), 0);
+        assert!(!state.day_zero_snapshot_attempted());
+
+        state.set_day_zero_step(3);
+        state.set_day_zero_snapshot_attempted(true);
+        state.set_day_zero_completed(true);
+
+        let loaded = State {
+            doc: load_doc(&path),
+            path,
+        };
+        assert!(loaded.day_zero_completed());
+        assert_eq!(loaded.day_zero_step(), 3);
+        assert!(loaded.day_zero_snapshot_attempted());
 
         let _ = std::fs::remove_dir_all(&dir);
     }

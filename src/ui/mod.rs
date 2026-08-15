@@ -1,4 +1,5 @@
 pub mod ask;
+pub mod day_zero;
 pub mod guide_view;
 pub mod home;
 pub mod keybind_viewer;

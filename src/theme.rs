@@ -69,6 +69,8 @@ window.wizard-dialog headerbar { \
   border-bottom: 1px solid alpha(@on-bg, 0.08); \
   box-shadow: none; \
 }\n\
+/* ui::day_zero — timezone list is a tall boxed list inside the Welcome tab. */\n\
+.day-zero list { margin-top: 4px; }\n\
 ";
 
 thread_local! {
