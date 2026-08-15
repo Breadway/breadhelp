@@ -1,6 +1,7 @@
 mod cli;
 mod config;
 mod content;
+mod listen;
 mod screenshot;
 mod services;
 mod theme;
@@ -10,6 +11,11 @@ use gtk4::gio::ApplicationFlags;
 use gtk4::prelude::*;
 
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("listen") {
+        listen::run();
+        return;
+    }
+
     // GApplication requires a dotted id (g_application_id_is_valid rejects a
     // bare "breadhelp" with a GLib-GIO-CRITICAL and silently skips setting
     // it, which would break D-Bus single-instance activation). The Wayland

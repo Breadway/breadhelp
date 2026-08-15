@@ -7,7 +7,7 @@
 use bread_utils::bread_client::BreadClient;
 
 /// Sibling-app id in `bread_shared::apps::KNOWN_APPS`. Events publish as
-/// `bread.help.*`. There is no command subscription.
+/// `bread.help.*`. Command verbs are handled by `breadhelp listen`.
 pub const APP_ID: &str = "help";
 
 /// Fire-and-forget `bread.help.opened` after the main window is actually
