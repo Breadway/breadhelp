@@ -131,6 +131,7 @@ fn build(app: &Application) -> Handle {
         .build();
 
     crate::theme::load(&WidgetExt::display(&window));
+    crate::theme::bind_window(&window);
 
     let store = Rc::new(ContentStore::load());
     let binds = Rc::new(keybinds::load());

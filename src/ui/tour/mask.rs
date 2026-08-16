@@ -20,6 +20,7 @@ fn new_mask_window(monitor: &gdk4::Monitor) -> Window {
     window.set_layer(Layer::Overlay);
     window.set_keyboard_mode(KeyboardMode::None);
     window.set_monitor(Some(monitor));
+    crate::theme::bind_window(&window);
     let dim = GBox::new(gtk4::Orientation::Vertical, 0);
     dim.add_css_class("tour-mask");
     dim.set_hexpand(true);

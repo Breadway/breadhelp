@@ -49,6 +49,7 @@ pub fn build(
     window.set_layer(Layer::Overlay);
     window.set_keyboard_mode(KeyboardMode::OnDemand);
     window.set_monitor(Some(monitor));
+    crate::theme::bind_window(&window);
 
     if let Some(rect) = rect {
         let (mon_w, mon_h) = monitor_size;

@@ -81,3 +81,8 @@ pub fn load(_display: &gtk4::gdk::Display) {
     bread_theme::gtk::apply_shared();
     APP_PROVIDER.with(|cell| bread_theme::gtk::apply_css(APP_CSS, cell));
 }
+
+pub fn bind_window(window: &impl gtk4::prelude::IsA<gtk4::Native>) {
+    bread_theme::gtk::bind_window_auto_with_app_css(window, |_| APP_CSS.to_string());
+}
+

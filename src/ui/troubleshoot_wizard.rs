@@ -38,6 +38,7 @@ pub fn open(parent: &impl IsA<gtk4::Window>, on_build: impl FnOnce(&Window)) {
         .default_height(360)
         .build();
     window.add_css_class("wizard-dialog");
+    crate::theme::bind_window(&window);
     let header = gtk4::HeaderBar::new();
     header.set_show_title_buttons(true);
     window.set_titlebar(Some(&header));
