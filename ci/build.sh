@@ -12,8 +12,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REV="$(cat "${ROOT}/ci/bread-ecosystem.rev")"
 
 CACHE_DIR="/tmp/bread-ecosystem-ci-${REV}"
-if [ ! -d "$CACHE_DIR" ]; then
-    rm -rf /tmp/bread-ecosystem-ci-*
+if [ ! -f "$CACHE_DIR/ci/build.sh" ]; then
+    rm -rf "$CACHE_DIR"
     git clone https://git.breadway.dev/Breadway/bread-ecosystem.git "$CACHE_DIR"
     git -C "$CACHE_DIR" checkout --quiet "$REV"
 fi
