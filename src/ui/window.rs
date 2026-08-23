@@ -30,13 +30,33 @@ thread_local! {
 /// over D-Bus to this primary instance by a second `breadhelp` launch — so
 /// it must build the window at most once and reuse it thereafter.
 pub fn present(app: &Application, action: Action) {
+    // Crash-recover keybinds even if this invocation never builds a window
+    // (silent every-login autostart).
+    tour::self_heal();
+
+    // Once onboarding is done, autostart only needs a warm process so
+    // Super+/ is instant. GTK/theme/font load is most of that cost and is
+    // paid by staying resident (~14 MiB PSS, no window). Building tabs
+    // adds ~2 MiB of dead weight for a session that may never open help.
+    let is_bare_silent_autostart = action.autostart
+        && action.screenshot.is_none()
+        && !action.force_onboard
+        && action.tour_event.is_none()
+        && action.suggest.is_none()
+        && State::load().onboarding_completed();
+    if is_bare_silent_autostart {
+        // No window means nothing holds GApplication open. Forget the hold
+        // guard so the primary instance lives for the session; logout is
+        // what ends it. Without this, the next Super+/ would cold-start.
+        std::mem::forget(app.hold());
+        return;
+    }
+
     HANDLE.with(|cell| {
-        let mut just_built = false;
         {
             let mut cell_ref = cell.borrow_mut();
             if cell_ref.is_none() {
                 *cell_ref = Some(build(app));
-                just_built = true;
             }
         }
         let cell_ref = cell.borrow();
@@ -62,19 +82,14 @@ pub fn present(app: &Application, action: Action) {
             if let Some(s) = crate::services::breadd::resolve(id) {
                 handle.home.set_suggestion(Some(&s.text));
             }
-            // Only focus the window the first time this process builds it
-            // (i.e. breadhelp wasn't already running) — a background daemon
-            // event shouldn't steal focus from whatever the user is doing.
-            if just_built {
-                show_window(&handle.window, action.autostart);
-            }
+            // Background daemon event — never steal focus. A `--suggest`
+            // can now be the first invocation of the session because
+            // silent autostart no longer builds a window.
             return;
         }
 
-        // Every-login autostart builds the window (so the app is ready to
-        // respond to SUPER+/ instantly) but only shows UI on a genuine
-        // first run — never on later logins. First run is now the in-window
-        // day-zero wizard; the live tour starts when that finishes.
+        // Bare silent autostart (onboarding done) already returned above.
+        // Autostart that reaches here is a genuine first run.
         let onboarded = State::load().onboarding_completed();
         if action.autostart && onboarded {
             return;

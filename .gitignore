@@ -40,3 +40,6 @@ logs/
 .claude/
 
 # Local hygiene notes (not for commit)
+
+# graphify knowledge-graph output (local tool cache, not for commit)
+graphify-out/
