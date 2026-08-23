@@ -15,7 +15,8 @@ nothing here is mandatory either, click around if you'd rather.
 - [Show Keybind]super + space[/Show Keybind] opens the launcher (breadbox)
 - [Show Keybind]super + e[/Show Keybind] opens files (nautilus)
 - [Show Keybind]super + b[/Show Keybind] opens the browser
-- [Show Keybind]super + u[/Show Keybind] opens notes
+- [Show Keybind]super + u[/Show Keybind] opens notes (breadpad)
+- [Show Keybind]super + ,[/Show Keybind] opens BOS Settings
 - [Show Keybind]super + l[/Show Keybind] locks the screen
 
 ## Screenshots
