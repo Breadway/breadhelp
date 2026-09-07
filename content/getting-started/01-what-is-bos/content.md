@@ -6,9 +6,9 @@ settings app that needs no config files.
 
 ## The basics
 
-- SUPER is the Windows/Cmd key — almost everything starts with it.
+- SUPER is the Windows/Cmd key: almost everything starts with it.
 - [Show Keybind]super + /[/Show Keybind] shows the full keybind cheatsheet any time.
-- [Show Keybind]super + ,[/Show Keybind] opens BOS Settings — configure the bar, launcher, Wi-Fi, notes, snapshots, and package updates all in one place.
+- [Show Keybind]super + ,[/Show Keybind] opens BOS Settings: configure the bar, launcher, Wi-Fi, notes, snapshots, and package updates all in one place.
 - [Show Keybind]super + space[/Show Keybind] opens the app launcher (breadbox).
 - [Show Keybind]super + return[/Show Keybind] opens a terminal.
 

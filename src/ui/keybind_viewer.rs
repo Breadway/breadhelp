@@ -63,7 +63,7 @@ pub fn row(bind: &Keybind) -> ListBoxRow {
     if let Some(raw) = bind.raw.clone() {
         let rebind_btn = MenuButton::builder().icon_name("document-edit-symbolic").build();
         rebind_btn.set_tooltip_text(Some("Temporary rebind"));
-        // Icon-only button — screen readers have nothing else to announce.
+        // Icon-only button: screen readers have nothing else to announce.
         rebind_btn.update_property(&[gtk4::accessible::Property::Label("Temporary rebind")]);
         rebind_btn.set_popover(Some(&rebind_popover(&raw)));
         hbox.append(&rebind_btn);
@@ -81,7 +81,7 @@ fn rebind_popover(raw: &str) -> Popover {
     vbox.set_margin_start(10);
     vbox.set_margin_end(10);
 
-    let hint = Label::new(Some("Temporary — resets on reload/login.\nEdit hyprland.lua for a permanent change."));
+    let hint = Label::new(Some("Temporary: resets on reload/login.\nEdit hyprland.lua for a permanent change."));
     hint.add_css_class("dim-label");
     hint.set_wrap(true);
     vbox.append(&hint);

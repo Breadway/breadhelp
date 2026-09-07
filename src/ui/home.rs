@@ -14,7 +14,7 @@ const FIX_WIFI: &str = "nmcli radio wifi off && sleep 1 && nmcli radio wifi on";
 const FIX_UPDATE: &str = "bos-update";
 const FIX_BACKUP: &str = "snapper -c root create --description 'breadhelp manual backup'";
 
-/// Handle back to the parts of Home that get updated after construction —
+/// Handle back to the parts of Home that get updated after construction:
 /// the suggestion banner (from breadd, see `services::breadd`) and the
 /// one-click-fix toast, neither of which exist until the widget tree is
 /// built once.
@@ -87,7 +87,7 @@ pub fn build(
     }
     vbox.append(&troubleshoot_btn);
 
-    // The live guided tour (ui::tour) is the real hands-on onboarding now —
+    // The live guided tour (ui::tour) is the real hands-on onboarding now;
     // a static text preview of the same guide titles Learn already lists
     // was a fossil of the old in-window wizard and just duplicated Learn's
     // sidebar. A single re-entry point is all this tab needs.

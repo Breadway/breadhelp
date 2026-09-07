@@ -1,10 +1,10 @@
 //! Troubleshooting wizard: a small modal window that walks a symptom tree
-//! (`content::troubleshoot`) — prompt as a heading, `options` as buttons,
+//! (`content::troubleshoot`): prompt as a heading, `options` as buttons,
 //! a leaf's `fix` as a "Run fix" button + result status.
 //!
 //! Uses the `Rc<Self>` method-receiver pattern (rather than a boxed
 //! recursive closure) so each button can re-render the same widget tree at
-//! a different node — `self.clone()` (an `Rc` clone) moves cleanly into
+//! a different node; `self.clone()` (an `Rc` clone) moves cleanly into
 //! GTK's `'static` signal closures.
 
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ use gtk4::{Align, Box as GBox, Button, Label, Orientation, Window};
 
 use crate::content::troubleshoot::{self, SymptomNode};
 
-/// Curated symptom files with a human label — file stems aren't user-facing
+/// Curated symptom files with a human label: file stems aren't user-facing
 /// strings, and not every `_symptoms/*.toml` necessarily belongs on the
 /// top-level picker.
 const SYMPTOMS: &[(&str, &str)] = &[("no-sound", "No sound"), ("wifi-wont-connect", "Wi-Fi won't connect")];
@@ -25,7 +25,7 @@ struct Wizard {
     trees: HashMap<String, Vec<SymptomNode>>,
 }
 
-/// `on_build` runs on the freshly built window *before* it's presented —
+/// `on_build` runs on the freshly built window *before* it's presented;
 /// screenshot mode's only hook point, since `connect_map` registered any
 /// later would miss a map that already happened. The real call site
 /// (`ui::home`) passes a no-op.
@@ -138,7 +138,7 @@ impl Wizard {
                 status_for_click.set_label("Running\u{2026}");
                 let status = status_for_click.clone();
                 crate::services::exec::run_reporting(&command, move |success| {
-                    status.set_label(if success { "Done." } else { "Something went wrong — see the terminal for details." });
+                    status.set_label(if success { "Done." } else { "Something went wrong, see the terminal for details." });
                 });
             });
             self.content.append(&run_btn);

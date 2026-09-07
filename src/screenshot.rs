@@ -1,9 +1,9 @@
 //! `--screenshot` CLI mode: switch to the named tab, capture it via
-//! `bread-screenshots`, then exit — driven by `bread-ecosystem`'s
+//! `bread-screenshots`, then exit: driven by `bread-ecosystem`'s
 //! `bread-capture` orchestrator, or run standalone for one-off captures.
 //!
 //! breadhelp has three tabs worth capturing (Home/Learn/Ask), switched via
-//! the same `Stack::set_visible_child_name` the tab switcher itself uses —
+//! the same `Stack::set_visible_child_name` the tab switcher itself uses,
 //! see `ui::tabs`. The window is a plain top-level (not layer-shell), so a
 //! full known-size canvas capture is enough, same reasoning as breadpad's
 //! popup view.
@@ -15,7 +15,7 @@
 //! Deliberately NOT covered here: the onboarding tour (`ui::tour`). It's a
 //! live, multi-step walkthrough that overlays callouts on the *real*
 //! desktop as the user does real things (opens real apps, switches real
-//! workspaces) — there's no meaningful "screenshot" of a single step in an
+//! workspaces): there's no meaningful "screenshot" of a single step in an
 //! isolated environment with no real desktop for it to point at.
 //! `ui::guide_view` and `ui::keybind_viewer` also aren't separate views:
 //! both render embedded *inside* the Learn/Home tabs respectively, so
@@ -26,7 +26,7 @@ use gtk4::prelude::*;
 use std::path::PathBuf;
 use std::time::Duration;
 
-/// Delay before opening the wizard modal — same reasoning as every other
+/// Delay before opening the wizard modal: same reasoning as every other
 /// app's PRE_POPUP_DELAY: the parent window's own layout needs a beat to
 /// settle first.
 const PRE_POPUP_DELAY: Duration = SETTLE_DELAY;
@@ -42,8 +42,8 @@ pub struct ScreenshotRequest {
 }
 
 /// Wire up the given view's screenshot sequence against an already-built
-/// window and its tab `Stack`. Every path here ends by exiting the process
-/// — it never returns control to the normal help-center UI.
+/// window and its tab `Stack`. Every path here ends by exiting the process;
+/// it never returns control to the normal help-center UI.
 pub fn dispatch(window: &gtk4::ApplicationWindow, stack: &gtk4::Stack, req: ScreenshotRequest) {
     if !KNOWN_VIEWS.contains(&req.view.as_str()) {
         eprintln!(
@@ -74,7 +74,7 @@ pub fn dispatch(window: &gtk4::ApplicationWindow, stack: &gtk4::Stack, req: Scre
         });
         // The caller (`ui::window::present`) returns immediately after this
         // for the screenshot path, skipping its own normal `window.present()`
-        // call — trigger it here instead, so `connect_map` above actually has
+        // call; trigger it here instead, so `connect_map` above actually has
         // something to fire for.
         window.present();
         return;

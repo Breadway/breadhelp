@@ -1,7 +1,7 @@
 # Snapshots and rollback
 
 Every package change snapshots your root filesystem automatically (snapper +
-snap-pac). Nothing to configure — it just happens.
+snap-pac). Nothing to configure: it just happens.
 
 ## Roll back
 

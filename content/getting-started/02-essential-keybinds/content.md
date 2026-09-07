@@ -1,6 +1,6 @@
 # The essential keybinds
 
-Hyprland is keyboard-first. You don't need a mouse for any of this — but
+Hyprland is keyboard-first. You don't need a mouse for any of this, but
 nothing here is mandatory either, click around if you'd rather.
 
 ## Windows
@@ -27,5 +27,5 @@ nothing here is mandatory either, click around if you'd rather.
 
 ## The full list
 
-The Home tab's keybind viewer always has the complete, current list — this
+The Home tab's keybind viewer always has the complete, current list; this
 guide only covers the ones you'll use every day.

@@ -5,7 +5,7 @@
 //!
 //! Steps are user-paced, so the engine always tears down and rebuilds the 5
 //! layer-shell windows on every transition rather than repositioning them in
-//! place — simpler and cheap enough at this frequency.
+//! place: simpler and cheap enough at this frequency.
 
 mod callout;
 mod mask;
@@ -26,7 +26,7 @@ use callout::Callout;
 
 /// How long a step with no detected target waits before offering a "Show
 /// me" fallback button. Deliberately NOT a timer that fires the demo
-/// automatically — an auto-fired demo can't be told apart from the user's
+/// automatically: an auto-fired demo can't be told apart from the user's
 /// own keypress from their side, silently teaching them nothing while
 /// looking like it worked. The button preserves that the user chose it.
 const HINT_DELAY_SECS: u32 = 10;
@@ -43,7 +43,7 @@ struct TourState {
     timeout_source: Option<glib::SourceId>,
     hint_source: Option<glib::SourceId>,
     /// Whether the current step's `success_event` has already fired. Doesn't
-    /// auto-advance — just switches the callout into a "done, click Next
+    /// auto-advance; just switches the callout into a "done, click Next
     /// when ready" state, so the user actually has time to read the step
     /// instead of it vanishing the instant the target event arrives.
     confirmed: bool,
@@ -56,7 +56,7 @@ thread_local! {
     static STATE: RefCell<Option<TourState>> = const { RefCell::new(None) };
 }
 
-/// Begin the tour from wherever `state.toml`'s `onboarding.step` left off —
+/// Begin the tour from wherever `state.toml`'s `onboarding.step` left off:
 /// the every-login autostart's genuine-first-run trigger.
 pub fn start(display: &gdk4::Display) {
     self_heal();
@@ -83,7 +83,7 @@ pub fn start(display: &gdk4::Display) {
     enter_step(start_index);
 }
 
-/// `breadhelp --onboard` — restart from step 0 regardless of prior progress.
+/// `breadhelp --onboard`: restart from step 0 regardless of prior progress.
 pub fn restart(display: &gdk4::Display) {
     let mut state = State::load();
     state.set_onboarding_completed(false);
@@ -93,7 +93,7 @@ pub fn restart(display: &gdk4::Display) {
 
 /// Reverts a keybind left rebound by a crashed previous run before it can
 /// surprise the user (e.g. popping breadhelp open on a later, unrelated
-/// press) — see `config::State::pending_rebind`. Safe to call any time,
+/// press); see `config::State::pending_rebind`. Safe to call any time,
 /// including when nothing is pending.
 pub fn self_heal() {
     revert_pending_rebind();
@@ -101,9 +101,9 @@ pub fn self_heal() {
 
 /// A `--tour-event <id>` arrived, forwarded by `breadhelp-tour.lua` over the
 /// same D-Bus argv-forwarding `--suggest` already uses. Hard no-op unless
-/// the active tour's current step is actually waiting for this exact id —
+/// the active tour's current step is actually waiting for this exact id:
 /// a stray/late event must never be able to do anything visible. Does NOT
-/// auto-advance to the next step — it confirms the current one (so the
+/// auto-advance to the next step; it confirms the current one (so the
 /// callout can show a "done" state) and leaves moving on to an explicit
 /// Next click, since jumping topics the instant the target event fires
 /// gives the user no time to actually read anything about it.
@@ -114,7 +114,7 @@ pub fn on_tour_event(id: &str) {
         // Only a *visibly* confirmed step blocks a re-fire. `confirmed` gets
         // set below, before `render_step` runs, so that render actually
         // paints the "done" state instead of the stale pre-confirmation one
-        // — but that means a step whose render silently no-ops (e.g. the
+        // but that means a step whose render silently no-ops (e.g. the
         // near-fullscreen suppression branch racing a `closelayer` event)
         // would otherwise latch `confirmed = true` with no callout to show
         // for it, permanently blocking every later retry. Checking
@@ -133,7 +133,7 @@ pub fn on_tour_event(id: &str) {
     });
     if let Some((index, step, binds, total)) = hit {
         // force_no_target=true: we already have authoritative confirmation
-        // from the real compositor event that fired this — see the comment
+        // from the real compositor event that fired this, see the comment
         // in `render_step` on why re-querying live state here is unsafe.
         render_step(index, &step, &binds, index + 1 >= total, true);
     }
@@ -182,7 +182,7 @@ fn teardown_visuals() {
     clear_visuals();
 }
 
-/// Just the mask + callout windows — never touches `poll_source`/
+/// Just the mask + callout windows: never touches `poll_source`/
 /// `timeout_source`, so this is safe to call from inside their own
 /// still-executing callbacks (unlike `teardown_visuals`).
 fn clear_visuals() {
@@ -217,7 +217,7 @@ fn enter_step(index: usize) {
     render_step(index, &step, &binds, index + 1 >= total, false);
 
     // Watch for the target appearing from the user's OWN action (pressing
-    // the real shortcut) — never fire `launch` here. A step that teaches a
+    // the real shortcut); never fire `launch` here. A step that teaches a
     // shortcut only actually teaches it if the user is the one who presses
     // it; see `HINT_DELAY_SECS` for the deliberate, user-initiated fallback.
     if !target::is_resolved(&step.target()) {
@@ -235,7 +235,7 @@ fn enter_step(index: usize) {
         let source = glib::timeout_add_seconds_local(secs as u32, move || {
             let still_current = STATE.with(|cell| cell.borrow().as_ref().map(|s| s.index)) == Some(index);
             // Clear our own handle before advancing rather than letting
-            // `teardown_visuals` call `.remove()` on us — this closure is
+            // `teardown_visuals` call `.remove()` on us: this closure is
             // already mid-dispatch and about to return `Break`, and self-
             // removing via `SourceId::remove()` from inside your own
             // callback is a GLib footgun (can log a spurious critical).
@@ -257,7 +257,7 @@ fn enter_step(index: usize) {
     }
 }
 
-/// Watches for the step's target appearing — from the user's own real
+/// Watches for the step's target appearing: from the user's own real
 /// keypress, or from clicking "Show me" (see `schedule_hint`), the poll
 /// doesn't care which. Runs for as long as the step stays current; there's
 /// no attempt cap because we're waiting on the user, not a fast-launching
@@ -300,7 +300,7 @@ fn clear_poll_source() {
 /// fallback button by re-rendering the step with `hint_visible` set.
 fn schedule_hint(index: usize) {
     let source = glib::timeout_add_seconds_local(HINT_DELAY_SECS, move || {
-        // Clear our own handle first — see the self-removal note on the
+        // Clear our own handle first; see the self-removal note on the
         // Timeout branch in `enter_step`, same footgun applies here.
         STATE.with(|cell| {
             if let Some(s) = cell.borrow_mut().as_mut() {
@@ -329,7 +329,7 @@ fn schedule_hint(index: usize) {
     });
 }
 
-/// The "Show me" button's click handler — the only place `launch` is ever
+/// The "Show me" button's click handler: the only place `launch` is ever
 /// fired, and only because the user explicitly asked for it.
 fn trigger_demo() {
     let launch = STATE.with(|cell| {
@@ -341,7 +341,7 @@ fn trigger_demo() {
     }
 }
 
-/// Marks the tour done without finishing every step — same end state as
+/// Marks the tour done without finishing every step: same end state as
 /// completing it normally (won't auto-relaunch on next login), just
 /// reachable at any point via the callout's low-emphasis "Skip tour".
 fn skip_tour() {
@@ -349,7 +349,7 @@ fn skip_tour() {
 }
 
 /// Builds the mask + callout for `step` and installs them, tearing down
-/// whatever was there before — called once immediately in `enter_step`
+/// whatever was there before: called once immediately in `enter_step`
 /// (usually with no target yet) and again by `schedule_poll` once a
 /// `launch`ed app's window/layer actually appears.
 fn render_step(index: usize, step: &Step, binds: &[Keybind], is_last: bool, force_no_target: bool) {
@@ -361,8 +361,8 @@ fn render_step(index: usize, step: &Step, binds: &[Keybind], is_last: bool, forc
 
     // `force_no_target` is set by `on_tour_event`'s confirmation path: a
     // fresh `hyprctl -j layers` query right after a real `closelayer` event
-    // has been observed to still report the surface as present — Hyprland's
-    // event and its own layer-list snapshot aren't tightly ordered — which
+    // has been observed to still report the surface as present; Hyprland's
+    // event and its own layer-list snapshot aren't tightly ordered, which
     // re-triggers the near-fullscreen suppression below and drops the
     // confirmed callout right back into invisible limbo. `on_tour_event`
     // already has authoritative confirmation the target is gone from the
@@ -377,19 +377,19 @@ fn render_step(index: usize, step: &Step, binds: &[Keybind], is_last: bool, forc
     let rect = resolved.map(|r| r.rect);
 
     // breadbox/breadclip/breadsearch anchor all 4 edges as fullscreen click-
-    // catchers — their visible launcher panel is small, but the surface
+    // catchers: their visible launcher panel is small, but the surface
     // hyprctl reports covers the whole monitor, and that surface owns all
     // pointer input while it's open. A callout drawn now would be buried
     // underneath it with no way to click Back/Next. The instructional
     // callout already showed (with working buttons) before the app opened;
     // once it's confirmed up, get out of the way entirely until it closes.
     // A step whose target resolves this way should key `success_event` off
-    // the surface *closing* (e.g. `layer-closed:breadbox`), not opening —
+    // the surface *closing* (e.g. `layer-closed:breadbox`), not opening;
     // by the time that fires the surface is already gone, so `confirmed`'s
     // re-render lands on a normal (non-fullscreen) target and is clickable.
     if let Some(r) = rect {
         if is_near_fullscreen(r, monitor_size) {
-            // Just the visuals, not `teardown_visuals()` — this can run from
+            // Just the visuals, not `teardown_visuals()`: this can run from
             // inside `schedule_poll`'s own still-executing closure, and that
             // function also cancels `poll_source` via `SourceId::remove()`,
             // which must never be called on a source's own in-progress
@@ -405,7 +405,7 @@ fn render_step(index: usize, step: &Step, binds: &[Keybind], is_last: bool, forc
     };
 
     // Only worth offering "Show me" while the target genuinely isn't up yet
-    // — once `rect` resolves, the user can plainly see it themselves.
+    // once `rect` resolves, the user can plainly see it themselves.
     let show_demo = hint_visible && !confirmed && rect.is_none() && step.launch.is_some();
 
     let callout = callout::build(&monitor, rect, monitor_size, step, binds, index, total, is_last, confirmed, show_demo);

@@ -1,4 +1,4 @@
-//! Live tour step loader — same shape of problem as `troubleshoot.rs`'s
+//! Live tour step loader: same shape of problem as `troubleshoot.rs`'s
 //! symptom trees: TOML data, not hardcoded Rust, so the tour can be edited
 //! without a rebuild. Fields are flat optionals rather than a tagged enum in
 //! the TOML itself (mirroring `SymptomOption::goto`'s plain-string encoding)
@@ -13,7 +13,7 @@ pub enum Target {
     Namespace(String),
     /// A plain toplevel window identified by its Wayland app-id/class.
     WindowClass(String),
-    /// Pure-concept step — full-screen dim, centered callout, no spotlight.
+    /// Pure-concept step: full-screen dim, centered callout, no spotlight.
     None,
 }
 
@@ -23,13 +23,13 @@ pub enum Success {
     Event(String),
     /// Auto-advance after this many seconds if no event arrives first.
     Timeout(u64),
-    /// Next button only — no event can signal this step's completion.
+    /// Next button only: no event can signal this step's completion.
     Manual,
 }
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Step {
-    /// Not read by any Rust code yet — steps are matched by index, not id.
+    /// Not read by any Rust code yet: steps are matched by index, not id.
     /// Real tour content already sets it (content authors use it to keep
     /// track of steps), so kept rather than dropped.
     #[allow(dead_code)]
@@ -42,7 +42,7 @@ pub struct Step {
     pub target_window_class: Option<String>,
     /// Shell command run when the step starts, e.g. launching breadbox so
     /// there's something to highlight. Skipped if the target is already
-    /// resolvable — several bread apps toggle-close on a second invocation
+    /// resolvable; several bread apps toggle-close on a second invocation
     /// of the same command, so firing this unconditionally could close an
     /// already-open instance instead of opening one.
     #[serde(default)]
@@ -53,10 +53,10 @@ pub struct Step {
     pub success_timeout_seconds: Option<u64>,
     /// A keybind combo (e.g. "super + shift + s") to temporarily rebind so
     /// its original action still runs but is chained with a
-    /// `--tour-event <success_event>` ping — for steps whose action has no
+    /// `--tour-event <success_event>` ping: for steps whose action has no
     /// compositor-observable signal at all (e.g. taking a screenshot).
     /// Reverted the moment this step is left, and self-healed on the next
-    /// launch if breadhelp crashes mid-step — see `ui::tour`.
+    /// launch if breadhelp crashes mid-step, see `ui::tour`.
     #[serde(default)]
     pub rebind_combo: Option<String>,
 }
@@ -92,7 +92,7 @@ struct TourFile {
 const SYSTEM_TOUR_PATH: &str = "/usr/share/breadhelp/content/tours/onboarding.toml";
 const TOUR_SUBPATH: &str = "tours/onboarding.toml";
 
-/// Checks the user content root first (where bakery installs content —
+/// Checks the user content root first (where bakery installs content,
 /// see `content::user_content_root`), falling back to the system path a
 /// pacman package would have used. Same "user copy wins" precedent as
 /// `ContentStore::load`.

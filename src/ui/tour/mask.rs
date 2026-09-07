@@ -1,6 +1,6 @@
 //! The spotlight: up to 4 `Layer::Overlay` strip windows (top/bottom/left/
 //! right) sized to leave a target's bounding box as a real gap with no
-//! surface over it at all — gtk4-layer-shell has no click-through/input-
+//! surface over it at all: gtk4-layer-shell has no click-through/input-
 //! region API (confirmed in its own docs), so the only way to let pointer
 //! input reach the real UI underneath is to literally not cover it with
 //! anything. A `Target::None` step instead gets one full-screen dim window,
@@ -29,7 +29,7 @@ fn new_mask_window(monitor: &gdk4::Monitor) -> Window {
     window
 }
 
-/// One dim window covering the whole monitor — used for `Target::None` steps.
+/// One dim window covering the whole monitor, used for `Target::None` steps.
 pub fn full_screen(monitor: &gdk4::Monitor) -> Vec<Window> {
     let window = new_mask_window(monitor);
     for edge in [Edge::Top, Edge::Bottom, Edge::Left, Edge::Right] {

@@ -13,7 +13,7 @@ struct CommandEntry {
     description: &'static str,
 }
 
-/// A small, curated command gallery — not every `bread*` binary, just the
+/// A small, curated command gallery: not every `bread*` binary, just the
 /// ones worth surfacing to someone searching for "what can I run".
 const COMMANDS: &[CommandEntry] = &[
     CommandEntry { name: "bos-update", description: "Update both the system (pacman) and the bread ecosystem (bakery) in one go." },
@@ -49,7 +49,7 @@ fn build_index(store: &ContentStore, binds: &[Keybind]) -> Vec<IndexEntry> {
         });
     }
     for bind in binds {
-        let label = format!("{} — {}", bind.combo, bind.action);
+        let label = format!("{}: {}", bind.combo, bind.action);
         let haystack = label.to_lowercase();
         index.push(IndexEntry { label, haystack, kind: Kind::Keybind(bind.clone()) });
     }

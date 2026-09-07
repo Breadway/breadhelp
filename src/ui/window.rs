@@ -26,8 +26,8 @@ thread_local! {
     static HANDLE: RefCell<Option<Handle>> = const { RefCell::new(None) };
 }
 
-/// Called from every `command_line` invocation — including ones forwarded
-/// over D-Bus to this primary instance by a second `breadhelp` launch — so
+/// Called from every `command_line` invocation, including ones forwarded
+/// over D-Bus to this primary instance by a second `breadhelp` launch, so
 /// it must build the window at most once and reuse it thereafter.
 pub fn present(app: &Application, action: Action) {
     // Crash-recover keybinds even if this invocation never builds a window
@@ -82,7 +82,7 @@ pub fn present(app: &Application, action: Action) {
             if let Some(s) = crate::services::breadd::resolve(id) {
                 handle.home.set_suggestion(Some(&s.text));
             }
-            // Background daemon event — never steal focus. A `--suggest`
+            // Background daemon event: never steal focus. A `--suggest`
             // can now be the first invocation of the session because
             // silent autostart no longer builds a window.
             return;
@@ -99,7 +99,7 @@ pub fn present(app: &Application, action: Action) {
             let stack = handle.stack.clone();
             let display = display.clone();
             day_zero::attach(&handle.stack, &handle.store, &handle.binds, move || {
-                // Drop the Welcome tab after the click handler returns —
+                // Drop the Welcome tab after the click handler returns;
                 // removing it here would destroy the Skip/Finish button
                 // mid-signal.
                 let stack = stack.clone();
@@ -124,7 +124,7 @@ pub fn present(app: &Application, action: Action) {
 }
 
 /// Present the help window and publish `bread.help.opened`. Screenshot
-/// mode calls `window.present()` itself and must not go through here —
+/// mode calls `window.present()` itself and must not go through here;
 /// that is capture, not a user-visible open.
 fn show_window(window: &ApplicationWindow, autostart: bool) {
     window.present();
@@ -187,7 +187,7 @@ fn build(app: &Application) -> Handle {
     content_vbox.append(&stack);
 
     window.set_child(Some(&content_vbox));
-    // Deliberately not presented here — `present()` (the caller) decides
+    // Deliberately not presented here: `present()` (the caller) decides
     // whether this initial build should actually be shown, so a from-cold
     // every-login autostart with onboarding already complete builds a
     // ready-but-hidden window instead of flashing it open. First run

@@ -1,7 +1,7 @@
 //! Resolves a `content::tour::Target` to a screen rect + the `gdk4::Monitor`
 //! it's on, via `services::hyprland`'s `hyprctl -j` snapshots. `hyprctl -j
 //! clients` reports a window's monitor as a numeric id, while GDK/Wayland
-//! only exposes a monitor's connector name — `hyprctl -j monitors` is the
+//! only exposes a monitor's connector name; `hyprctl -j monitors` is the
 //! join between the two (`Client::monitor == Monitor::id`, then match
 //! `Monitor::name` against `gdk4::Monitor::connector()`).
 
@@ -47,14 +47,14 @@ fn find_gdk_monitor(display: &gdk4::Display, name: &str) -> Option<gdk4::Monitor
 }
 
 /// Falls back to this when a step has no target (nothing to resolve a
-/// monitor from) or a `launch`ed target never appeared — the tour should
+/// monitor from) or a `launch`ed target never appeared, the tour should
 /// still show up on whichever output the user is actually looking at.
 pub fn focused_monitor(display: &gdk4::Display) -> Option<gdk4::Monitor> {
     let name = hyprland::monitors().into_iter().find(|m| m.focused)?.name;
     find_gdk_monitor(display, &name)
 }
 
-/// Whether `target` is currently resolvable on screen — checked before
+/// Whether `target` is currently resolvable on screen: checked before
 /// firing a step's `launch` command, since breadbox/breadclip/breadsearch
 /// toggle-close on a second invocation of the same command; unconditionally
 /// launching would close an already-open instance instead of opening one.

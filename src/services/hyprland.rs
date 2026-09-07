@@ -4,7 +4,7 @@ use std::process::Command;
 /// Runtime-only rebind via `hyprctl keyword bind`: takes effect immediately
 /// and resets on the next Hyprland reload/login. `hyprland.lua` can't safely
 /// be rewritten line-by-line by a program (hand-authored Lua, arbitrary
-/// formatting), so this is the only rebind path — callers must label it
+/// formatting), so this is the only rebind path; callers must label it
 /// clearly as temporary in the UI.
 ///
 /// `bind_value` is the full `<mods>,<key>,<dispatcher>,<args>` string, e.g.
@@ -20,7 +20,7 @@ pub struct Client {
     pub class: String,
     pub at: (i32, i32),
     pub size: (i32, i32),
-    /// Numeric monitor id — join against `monitors()` by `Monitor::id` for a name.
+    /// Numeric monitor id: join against `monitors()` by `Monitor::id` for a name.
     pub monitor: i32,
 }
 

@@ -9,7 +9,7 @@ pub fn run(command: &str) {
     }
 }
 
-/// Fire-and-forget argv form — use this when arguments come from the UI
+/// Fire-and-forget argv form: use this when arguments come from the UI
 /// (timezone names, page ids) so they never pass through a shell.
 pub fn run_argv(prog: &str, args: &[&str]) {
     if let Err(e) = Command::new(prog).args(args).spawn() {
@@ -39,7 +39,7 @@ fn is_executable(path: &Path) -> bool {
 }
 
 /// Runs `command` on a background thread and delivers success/failure back
-/// onto the GTK main loop via `on_done` — plain `spawn()` only confirms the
+/// onto the GTK main loop via `on_done`: plain `spawn()` only confirms the
 /// process *launched*, not how it exited, and one-click fixes need to report
 /// that back to the user (a toast), so this blocks a throwaway thread on
 /// `Command::status()` instead of the UI thread.
