@@ -5,8 +5,8 @@
 //! Existing users who already finished the desktop tour never see it
 //! (`needs_wizard` is false when `onboarding.completed` is set).
 //!
-//! Finish (or skip) hands off to the live tour — the previous first-run
-//! destination — with the Home cheatsheet already showing underneath.
+//! Finish (or skip) hands off to the live tour: the previous first-run
+//! destination, with the Home cheatsheet already showing underneath.
 
 use std::cell::{Cell, RefCell};
 use std::process::Command;
@@ -467,7 +467,7 @@ impl Wizard {
     fn render_snapshot(self: &Rc<Self>) {
         let available = exec::command_exists("snapper");
         let blurb = Label::new(Some(if available {
-            "A snapshot is a restore point. We'll try to create one named day-zero — if this machine doesn't allow it, that's fine."
+            "A snapshot is a restore point. We'll try to create one named day-zero; if this machine doesn't allow it, that's fine."
         } else {
             "snapper isn't available on this system, so no first-boot snapshot will be created. You can skip this."
         }));
@@ -508,7 +508,7 @@ impl Wizard {
 
     fn render_finish(self: &Rc<Self>) {
         let blurb = Label::new(Some(
-            "You're set. Next is a short tour of the real desktop. Super+/ opens this help center any time — the Home tab is the keybind cheatsheet.",
+            "You're set. Next is a short tour of the real desktop. Super+/ opens this help center any time: the Home tab is the keybind cheatsheet.",
         ));
         blurb.set_wrap(true);
         blurb.set_xalign(0.0);
@@ -531,7 +531,7 @@ fn snapshot_status(ok: bool) -> &'static str {
     if ok {
         "Created snapshot “day-zero”."
     } else {
-        "Couldn't create a snapshot (that's OK — you can do this later from Settings)."
+        "Couldn't create a snapshot (that's OK, you can do this later from Settings)."
     }
 }
 

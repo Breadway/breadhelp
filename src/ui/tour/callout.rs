@@ -25,7 +25,7 @@ pub struct Callout {
 
 const CALLOUT_WIDTH: i32 = 360;
 /// Rough height estimate used only to decide "does this fit below the
-/// target" before the widget has actually been laid out — doesn't need to
+/// target" before the widget has actually been laid out; doesn't need to
 /// be exact, just enough to avoid running off the bottom of the screen.
 const ESTIMATED_HEIGHT: i32 = 220;
 
@@ -65,7 +65,7 @@ pub fn build(
         window.set_margin(Edge::Left, margin_left);
         window.set_margin(Edge::Top, margin_top);
     }
-    // No anchors for a `Target::None` step — left to the compositor, which
+    // No anchors for a `Target::None` step: left to the compositor, which
     // centers unanchored layer surfaces.
 
     let root = GBox::new(Orientation::Vertical, 12);
@@ -82,7 +82,7 @@ pub fn build(
     root.append(&body);
 
     if confirmed {
-        let done = Label::new(Some("\u{2713} Nice work — click Next to continue."));
+        let done = Label::new(Some("\u{2713} Nice work, click Next to continue."));
         done.add_css_class("tour-confirmed");
         done.set_xalign(0.0);
         root.append(&done);
@@ -104,7 +104,7 @@ pub fn build(
         None
     };
 
-    // Text only, not a dot row too — a separate row of dots next to this
+    // Text only, not a dot row too: a separate row of dots next to this
     // said the identical thing twice with no added legibility.
     let counter = Label::new(Some(&format!("Step {} of {total}", step_index + 1)));
     counter.add_css_class("dim-label");

@@ -4,7 +4,7 @@
 //! deliberately not rendered as HTML in a WebKitGTK view: no sibling app in
 //! this ecosystem embeds a browser engine, a full parser still wouldn't
 //! understand the `[Run]`/`[Show Keybind]` tags so it buys nothing, and this
-//! content is authored in-repo by BOS maintainers, not arbitrary user input —
+//! content is authored in-repo by BOS maintainers, not arbitrary user input,
 //! a small subset is an acceptable authoring limit, not a security compromise.
 //!
 //! Supported: `#`/`##` headings, one-block-per-line paragraphs, `- ` bullets,
@@ -81,7 +81,7 @@ fn parse_spans(text: &str) -> Vec<Span> {
         let (open_len, close_tag) = if is_run { (RUN_OPEN.len(), RUN_CLOSE) } else { (KB_OPEN.len(), KB_CLOSE) };
         let after = &rest[idx + open_len..];
         let Some(end) = after.find(close_tag) else {
-            // Unterminated tag — keep the literal text rather than dropping it.
+            // Unterminated tag: keep the literal text rather than dropping it.
             spans.push(Span::Text(rest[idx..].to_string()));
             break;
         };
@@ -137,7 +137,7 @@ fn render_spans(spans: &[Span], binds: &[Keybind]) -> gtk4::Widget {
                 lbl.set_wrap(true);
                 // `set_wrap` alone only wraps once something else constrains
                 // the label's allocated width (true inside guide_view's fixed-
-                // width scrolled pane) — a freestanding top-level window (the
+                // width scrolled pane), a freestanding top-level window (the
                 // tour callout) has nothing to allocate against, so without
                 // this a long paragraph reports its unwrapped natural width
                 // and the whole window balloons to fit it.
@@ -168,7 +168,7 @@ fn inline_markup(text: &str) -> String {
     replace_delim(&bolded, "`", "<tt>", "</tt>")
 }
 
-/// Alternates `open`/`close` between successive `delim`-separated segments —
+/// Alternates `open`/`close` between successive `delim`-separated segments:
 /// an odd number of delimiters leaves a dangling tag, which GTK's markup
 /// parser reports as a warning rather than crashing (acceptable: this only
 /// runs over content authored in-repo, per the module's rationale above).

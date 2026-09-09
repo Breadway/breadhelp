@@ -1,7 +1,7 @@
 //! Guide content: `/usr/share/breadhelp/content/` (system, shipped by the
 //! package) merged with `~/.local/share/breadhelp/content/` (user overrides/
 //! additions). A guide directory name colliding between the two roots means
-//! the user copy wins wholesale — no field-level merge, same "replace the
+//! the user copy wins wholesale: no field-level merge, same "replace the
 //! whole doc" discipline `bos-settings/src/config/mod.rs` uses for TOML, just
 //! at the file-tree level.
 
@@ -18,7 +18,7 @@ use meta::GuideMeta;
 
 const SYSTEM_ROOT: &str = "/usr/share/breadhelp/content";
 
-/// Categories are just top-level content directories — this only fixes the
+/// Categories are just top-level content directories; this only fixes the
 /// *display order* of ones we know about; unrecognized directories still
 /// show up (sorted alphabetically after these) instead of being hidden.
 const CATEGORY_ORDER: &[&str] = &[
@@ -131,7 +131,7 @@ impl ContentStore {
         &self.guides
     }
 
-    /// The guide body for the given mode — `content.beginner.md` when in a
+    /// The guide body for the given mode: `content.beginner.md` when in a
     /// simplified mode and present, otherwise `content.md`. Never errors: a
     /// missing file just renders as an empty guide rather than crashing.
     pub fn body(&self, guide: &Guide, simplified: bool) -> String {

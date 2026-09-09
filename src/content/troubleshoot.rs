@@ -15,7 +15,7 @@ pub struct SymptomOption {
 pub struct Fix {
     pub description: String,
     pub command: String,
-    /// Not read by `ui::troubleshoot_wizard` yet — the "Run fix" button
+    /// Not read by `ui::troubleshoot_wizard` yet; the "Run fix" button
     /// currently executes unconditionally regardless of this flag. Real
     /// symptom content already sets it, so kept rather than dropped; the
     /// wizard should gate on it before this is treated as safe.
@@ -70,7 +70,7 @@ fn scan_symptoms_dir(dir: &Path, out: &mut std::collections::HashMap<String, Vec
 /// Loads every `*.toml` file in the symptoms directory, keyed by file stem so
 /// a `SymptomOption::goto` of `"no-sound:check-mute"` can be resolved. Scans
 /// the system path (a pacman package's location) then the user content root
-/// (where bakery installs content — see `content::user_content_root`) —
+/// (where bakery installs content, see `content::user_content_root`), the
 /// same "user copy wins on collision" precedent as `ContentStore::load`.
 pub fn load_all() -> std::collections::HashMap<String, Vec<SymptomNode>> {
     let mut out = std::collections::HashMap::new();

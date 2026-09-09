@@ -1,4 +1,4 @@
-//! Loads `~/.config/hypr/binds.json` — the SAME structured data
+//! Loads `~/.config/hypr/binds.json`: the SAME structured data
 //! `hyprland.lua` itself loads (via `scripts/input/{binds,keybinds}.lua`) to
 //! generate the real Hyprland binds. Reading this directly, rather than a
 //! separately-maintained cheatsheet, means the keybind viewer can never
@@ -13,7 +13,7 @@ pub struct Keybind {
     /// What the onboarding tour's "Try it" button runs for this bind.
     pub demo_cmd: Option<String>,
     /// The `<dispatcher>,<args>` half of the real `hyprctl keyword bind`
-    /// value (e.g. `"exec,breadbox"`) — only synthesized for `action: "exec"`
+    /// value (e.g. `"exec,breadbox"`), only synthesized for `action: "exec"`
     /// entries, since binds.json's other actions ("close", "fullscreen", ...)
     /// are this app's own loader abstraction, not real Hyprland dispatcher
     /// names, and there's no safe generic way to reconstruct one. Binds
@@ -67,7 +67,7 @@ pub fn load() -> Vec<Keybind> {
         .into_iter()
         .map(|entry| {
             // An explicit "mods": [] (media keys) must NOT fall back to
-            // default_mods — only an omitted `mods` field should, matching
+            // default_mods: only an omitted `mods` field should, matching
             // scripts/input/keybinds.lua's own normalize_mods semantics.
             let mods = entry.mods.unwrap_or_else(|| default_mods.clone());
             let combo = if mods.is_empty() {
@@ -88,7 +88,7 @@ pub fn load() -> Vec<Keybind> {
 }
 
 /// Case-insensitive lookup by combo (e.g. "super + space") for `[Show
-/// Keybind]` tags — falls back to `None` (rendered as raw text) rather than
+/// Keybind]` tags; falls back to `None` (rendered as raw text) rather than
 /// panicking when a guide references a combo that doesn't exist.
 pub fn find<'a>(binds: &'a [Keybind], combo: &str) -> Option<&'a Keybind> {
     let norm = normalize(combo);
@@ -101,7 +101,7 @@ fn normalize(combo: &str) -> String {
 
 /// Best-effort conversion of a human combo ("super + shift + u") into
 /// hyprctl's `<mods>_<mods>,<key>` form ("SUPER_SHIFT,U") for the temporary
-/// rebind feature — not a full Hyprland key-name parser, just enough for the
+/// rebind feature: not a full Hyprland key-name parser, just enough for the
 /// common single-letter/named-key binds this viewer lists.
 pub fn to_hypr_mods_key(combo: &str) -> String {
     let parts: Vec<String> = combo

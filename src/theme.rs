@@ -19,18 +19,18 @@ label.keybind-chip { \
   border-radius: 6px; \
   background-color: alpha(@on-surface, 0.12); \
 }\n\
-/* Special modes (ui/modes.rs) — Beginner/Dad bump text and touch targets; \
+/* Special modes (ui/modes.rs): Beginner/Dad bump text and touch targets; \
    Compact tightens padding. Content simplification (content.beginner.md) \
-   is a separate, content-level concern — this is visual only. */\n\
+   is a separate, content-level concern; this is visual only. */\n\
 .beginner-mode label, .dad-mode label { font-size: 15px; }\n\
 .dad-mode label { font-size: 17px; }\n\
 .dad-mode button { min-height: 44px; padding: 10px 18px; }\n\
 .beginner-mode button { min-height: 36px; }\n\
 .compact-mode .view-content { padding: 12px; }\n\
-/* ui::tour — mask strips dim everything except the spotlight cutout; the \
+/* ui::tour: mask strips dim everything except the spotlight cutout; the \
    callout is a small floating card near (or, for no-target steps, centered \
    over) the highlighted thing. The shared stylesheet's `window { \
-   background-color: @bg }` rule matches every GtkWindow including these — \
+   background-color: @bg }` rule matches every GtkWindow including these; \
    without this override GTK paints that opaque backdrop before the \
    translucent mask box composites onto it, so the alpha never reaches the \
    compositor and the \"dim\" reads as solid black. A class-qualified \
@@ -45,15 +45,15 @@ window.tour-window { background-color: transparent; }\n\
   padding: 16px 20px; \
 }\n\
 .tour-callout label.page-title { font-weight: bold; font-size: 15px; }\n\
-/* The one payoff line in the whole tour — the user did the real thing and \
-   the compositor proved it — shouldn't read as the same throwaway meta \
+/* The one payoff line in the whole tour: the user did the real thing and \
+   the compositor proved it, shouldn't read as the same throwaway meta \
    text as the step counter. */\n\
 .tour-confirmed { color: @green; font-weight: bold; }\n\
 /* Extra top margin (on top of the callout's uniform 12px row gap) marks \
    the \"Show me\" fallback as its own beat, not a continuation of the \
    instructional paragraph above it. */\n\
 .tour-hint-row { margin-top: 8px; }\n\
-/* ui::troubleshoot_wizard — a bare gtk4::Window with no titlebar falls back \
+/* ui::troubleshoot_wizard: a bare gtk4::Window with no titlebar falls back \
    to GTK's own minimal CSD (flat bar, plain system-font title, square \
    corners), which read as a stray window from a different decade next to \
    the rest of this (rounded, borderless) app. A real HeaderBar (set in \
@@ -69,7 +69,7 @@ window.wizard-dialog headerbar { \
   border-bottom: 1px solid alpha(@on-bg, 0.08); \
   box-shadow: none; \
 }\n\
-/* ui::day_zero — timezone list is a tall boxed list inside the Welcome tab. */\n\
+/* ui::day_zero: timezone list is a tall boxed list inside the Welcome tab. */\n\
 .day-zero list { margin-top: 4px; }\n\
 ";
 

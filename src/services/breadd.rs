@@ -1,7 +1,7 @@
 //! Bread bus integration. `--suggest` banners stay local; `bread.help.*`
 //! emits are optional and fail-silent. See `EVENTS.md`.
 //!
-//! `BreadClient::emit` never blocks or errors this process — a missing or
+//! `BreadClient::emit` never blocks or errors this process: a missing or
 //! restarting breadd must not affect the help center itself.
 
 use bread_utils::bread_client::BreadClient;
@@ -26,7 +26,7 @@ pub struct Suggestion {
 pub fn resolve(id: &str) -> Option<Suggestion> {
     match id {
         "monitor-setup" => Some(Suggestion {
-            text: "New monitor detected — want to set up your display layout?".to_string(),
+            text: "New monitor detected: want to set up your display layout?".to_string(),
         }),
         _ => None,
     }

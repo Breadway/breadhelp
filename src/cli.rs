@@ -1,4 +1,4 @@
-//! argv handling for a `HANDLES_COMMAND_LINE` GApplication — every
+//! argv handling for a `HANDLES_COMMAND_LINE` GApplication: every
 //! invocation (including ones launched while breadhelp is already running,
 //! forwarded over D-Bus to the primary instance) reaches
 //! `connect_command_line`, so `--onboard` on a second launch re-triggers the
@@ -16,7 +16,7 @@ pub struct Action {
     /// user explicitly running `breadhelp` or pressing SUPER+/. Lets
     /// `present()` build the window (so the app is ready to respond the
     /// instant it's needed) without popping it open when onboarding is
-    /// already done — autostart should only be visible on a genuine first
+    /// already done; autostart should only be visible on a genuine first
     /// run (day-zero wizard, then the desktop tour), never on every
     /// subsequent login.
     pub autostart: bool,
@@ -26,7 +26,7 @@ pub struct Action {
     /// From `breadhelp-tour.lua` forwarding a bread/Hyprland event (window
     /// opened, layer opened, workspace changed, or a rebind-chained ping) as
     /// a candidate "the user just did the thing" signal for the live tour.
-    /// Only acted on if a tour is currently waiting for this exact id —
+    /// Only acted on if a tour is currently waiting for this exact id;
     /// see the crash-safety note on `ui::tour`.
     pub tour_event: Option<String>,
     /// Render the named tab, capture it, then exit instead of running
@@ -34,10 +34,10 @@ pub struct Action {
     pub screenshot: Option<String>,
     /// PNG path to write the capture to. Required together with `screenshot`.
     pub output: Option<String>,
-    /// Capture canvas width — matches the isolated compositor's output
+    /// Capture canvas width: matches the isolated compositor's output
     /// width (`bread-capture --isolate-width`).
     pub width: u32,
-    /// Capture canvas height — see `width`.
+    /// Capture canvas height, see `width`.
     pub height: u32,
 }
 

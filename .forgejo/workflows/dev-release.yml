@@ -1,7 +1,7 @@
 name: dev release
 
 # Publishes a dev-track build on every push to `main` (the trunk
-# branch — there is no separate `dev` branch). See bread-ecosystem's
+# branch; there is no separate `dev` branch). See bread-ecosystem's
 # docs/release-channels.md for the release-track policy this is part of.
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
           set -euo pipefail
           cd src
           # Base the dev version off the latest published stable tag,
-          # not Cargo.toml — Cargo.toml can go stale relative to the last
+          # not Cargo.toml: Cargo.toml can go stale relative to the last
           # real release, which would make a dev build sort as OLDER than
           # what's already installed and bakery would correctly refuse it.
           LATEST_TAG="$(git ls-remote --tags --refs \
@@ -60,7 +60,7 @@ jobs:
           cp src/bakery.toml "${PKG_DIR}/bakery.toml"
           ln -sfn "${VERSION}" "/srv/breadway-dl/dev/breadhelp/latest"
 
-      # No GitHub Release upload — dev, like the other non-stable track,
+      # No GitHub Release upload: dev, like the other non-stable track,
       # is only distributed via dl.breadway.dev/dev/.
       - name: regenerate dev index.json
         env:
@@ -68,10 +68,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${MINISIGN_SEC_KEY:-}" ]; then
-            echo "::error::BAKERY_MINISIGN_SEC_KEY_PATH secret not set — refusing to regenerate dev index.json unsigned (would leave a stale signature mismatched against fresh content and break bakery for everyone on the dev track)"
+            echo "::error::BAKERY_MINISIGN_SEC_KEY_PATH secret not set: refusing to regenerate dev index.json unsigned (would leave a stale signature mismatched against fresh content and break bakery for everyone on the dev track)"
             exit 1
           fi
-          # Do not wipe /tmp/bread-ecosystem-ci-* — other products' ci/build.sh
+          # Do not wipe /tmp/bread-ecosystem-ci-*: other products' ci/build.sh
           # caches live there and a wipe between their build and test steps
           # is a 127 (missing ci/build.sh).
           ECOSYSTEM_CI_DIR="$(mktemp -d /tmp/bread-ecosystem-index-XXXXXX)"

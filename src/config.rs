@@ -1,10 +1,10 @@
-//! `~/.config/breadhelp/state.toml` — non-destructive TOML editing via
+//! `~/.config/breadhelp/state.toml`: non-destructive TOML editing via
 //! `bread_utils::tomlcfg`, the same `load_doc`/`save_doc` discipline
 //! `bos-settings/src/config/mod.rs` uses: a missing file yields defaults, a
 //! file that exists but fails to parse is backed up once before falling
 //! back, so a bad edit is always recoverable. This module used to carry its
 //! own byte-for-byte copy of that logic (introduced in the same fix pass
-//! that added it to bos-settings) — now both share one implementation.
+//! that added it to bos-settings); now both share one implementation.
 
 use std::path::{Path, PathBuf};
 use toml_edit::{value, DocumentMut};
@@ -145,7 +145,7 @@ impl State {
     /// step), cleared the instant after reverting. If breadhelp is killed
     /// mid-step, this is how the next launch knows a keybind was left
     /// pointing at a chained `--tour-event` ping and self-heals it before
-    /// the user can be surprised by a stray tour popup — see `ui::tour`.
+    /// the user can be surprised by a stray tour popup; see `ui::tour`.
     pub fn pending_rebind(&self) -> Option<(String, String)> {
         let key = self
             .doc
@@ -204,7 +204,7 @@ mod tests {
     fn state_toml_write_backs_up_previous_contents_and_no_tmp_file_left_behind() {
         // Exercises the same bread_utils::atomic::write_atomic_backed_up
         // path save_doc uses (via tomlcfg::save_doc), at the file-layout
-        // breadhelp actually writes to — the deeper backup/no-leftover-tmp
+        // breadhelp actually writes to: the deeper backup/no-leftover-tmp
         // behavior itself is covered by bread-utils' own test suite.
         let dir = std::env::temp_dir().join(format!(
             "breadhelp-atomic-write-test-{}",
