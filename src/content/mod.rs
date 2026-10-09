@@ -144,3 +144,62 @@ impl ContentStore {
         std::fs::read_to_string(guide.dir.join("content.md")).unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod shipped_content_tests {
+    use super::*;
+
+    fn shipped() -> BTreeMap<(String, String), Guide> {
+        let mut out = BTreeMap::new();
+        scan_root(&Path::new(env!("CARGO_MANIFEST_DIR")).join("content"), &mut out);
+        out
+    }
+
+    #[test]
+    fn every_shipped_guide_loads_and_has_a_body() {
+        let guides = shipped();
+        assert!(!guides.is_empty());
+        for ((cat, id), g) in &guides {
+            let body = std::fs::read_to_string(g.dir.join("content.md"))
+                .unwrap_or_else(|_| panic!("{cat}/{id} has no content.md"));
+            assert!(!markdown::parse(&body).is_empty(), "{cat}/{id} parses to nothing");
+            assert!(!g.meta.title.trim().is_empty(), "{cat}/{id} has no title");
+        }
+    }
+
+    #[test]
+    fn related_guides_resolve() {
+        let guides = shipped();
+        let ids: Vec<&str> = guides.keys().map(|(_, id)| id.as_str()).collect();
+        for ((cat, id), g) in &guides {
+            for rel in &g.meta.related {
+                assert!(ids.contains(&rel.as_str()), "{cat}/{id} relates to missing guide '{rel}'");
+            }
+        }
+    }
+
+    #[test]
+    fn the_breadbug_guides_exist_and_make_the_privacy_promises() {
+        let guides = shipped();
+        let report = guides.get(&("apps".into(), "02-reporting-a-problem".into())).expect("how-to guide");
+        let privacy = guides
+            .get(&("advanced".into(), "02-bug-reports-and-your-privacy".into()))
+            .expect("privacy guide");
+        let report_body = std::fs::read_to_string(report.dir.join("content.md")).unwrap();
+        let privacy_body = std::fs::read_to_string(privacy.dir.join("content.md")).unwrap();
+        assert!(report_body.contains("nothing is sent unless you choose to send it"));
+        assert!(report_body.contains("[Show Keybind]super + shift + b[/Show Keybind]"));
+        for promise in [
+            "Sending is off by default",
+            "90 days",
+            "never collected",
+            "breadbug delete",
+            "does not store your IP address",
+        ] {
+            assert!(
+                privacy_body.to_lowercase().contains(&promise.to_lowercase()),
+                "privacy guide lacks: {promise}"
+            );
+        }
+    }
+}
