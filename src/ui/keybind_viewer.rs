@@ -103,7 +103,9 @@ fn rebind_popover(raw: &str) -> Popover {
         if mods_key.is_empty() {
             return;
         }
-        crate::services::hyprland::rebind_temp(&format!("{mods_key},{raw}"));
+        if let Err(e) = crate::services::hyprland::rebind_temp(&format!("{mods_key},{raw}")) {
+            eprintln!("breadhelp: temporary rebind failed: {e}");
+        }
         if let Some(p) = popover_weak.upgrade() {
             p.popdown();
         }

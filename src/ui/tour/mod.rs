@@ -444,13 +444,17 @@ fn apply_rebind_for_step(step: &Step, binds: &[Keybind]) {
     let chained_bind_value = format!("{mods_key},exec,sh -c '{escaped} ; breadhelp --tour-event {event_id}'");
     let mut cfg = State::load();
     cfg.set_pending_rebind(&mods_key, &original_bind_value);
-    hyprland::rebind_temp(&chained_bind_value);
+    if let Err(e) = hyprland::rebind_temp(&chained_bind_value) {
+        eprintln!("breadhelp: tour rebind failed: {e}");
+    }
 }
 
 fn revert_pending_rebind() {
     let mut cfg = State::load();
     if let Some((_key, original)) = cfg.pending_rebind() {
-        hyprland::rebind_temp(&original);
+        if let Err(e) = hyprland::rebind_temp(&original) {
+            eprintln!("breadhelp: restoring tour rebind failed: {e}");
+        }
     }
     cfg.clear_pending_rebind();
 }

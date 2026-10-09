@@ -1,18 +1,71 @@
 use serde::Deserialize;
-use std::process::Command;
+use std::time::Duration;
 
-/// Runtime-only rebind via `hyprctl keyword bind`: takes effect immediately
-/// and resets on the next Hyprland reload/login. `hyprland.lua` can't safely
-/// be rewritten line-by-line by a program (hand-authored Lua, arbitrary
-/// formatting), so this is the only rebind path; callers must label it
-/// clearly as temporary in the UI.
+/// Runtime-only rebind: takes effect immediately and resets on the next
+/// Hyprland reload/login. `hyprland.lua` can't safely be rewritten
+/// line-by-line by a program (hand-authored Lua, arbitrary formatting), so
+/// this is the only rebind path; callers must label it clearly as temporary
+/// in the UI.
 ///
-/// `bind_value` is the full `<mods>,<key>,<dispatcher>,<args>` string, e.g.
-/// `"SUPER,U,exec,breadpad"`.
-pub fn rebind_temp(bind_value: &str) {
-    if let Err(e) = Command::new("hyprctl").args(["keyword", "bind", bind_value]).spawn() {
-        eprintln!("breadhelp: hyprctl rebind failed: {e}");
+/// Hyprland is configured with `hyprland.lua`, where `hyprctl keyword` is
+/// refused ("keyword can't work with non-legacy parsers. Use eval.") while
+/// still exiting 0. The bind goes through `hyprctl eval` with `hl.bind`
+/// instead, the same call BOS's `scripts/input/keybinds.lua` makes, and the
+/// reply must be `ok`.
+///
+/// `bind_value` is the `<mods>,<key>,<dispatcher>,<args>` string this app
+/// stores and builds, e.g. `"SUPER,U,exec,breadpad"` (or `",XF86Foo,exec,x"`
+/// with no modifier). Only the `exec` dispatcher is supported, which is all
+/// binds.json entries can be turned into here.
+pub fn rebind_temp(bind_value: &str) -> Result<(), String> {
+    let expr = bind_eval_expr(bind_value)?;
+    let out = bread_utils::proc::run("hyprctl", &["eval", &expr], Duration::from_secs(3));
+    let reply = out.stdout.trim();
+    if out.success && reply == "ok" {
+        Ok(())
+    } else if reply.is_empty() {
+        Err(format!("hyprctl eval produced no reply ({})", out.stderr.trim()))
+    } else {
+        Err(format!("hyprctl eval replied {reply:?}"))
     }
+}
+
+/// Quote `s` as a single-quoted Lua string literal.
+fn lua_str(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('\'');
+    for c in s.chars() {
+        match c {
+            '\\' => out.push_str("\\\\"),
+            '\'' => out.push_str("\\'"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            c => out.push(c),
+        }
+    }
+    out.push('\'');
+    out
+}
+
+/// Turn `<mods>,<key>,exec,<command>` into
+/// `hl.bind('<MOD + MOD + key>', hl.dsp.exec_cmd('<command>'))`.
+/// Modifiers are separated by `_` or whitespace in the `<mods>` field and by
+/// ` + ` in `hl.bind`'s key string.
+fn bind_eval_expr(bind_value: &str) -> Result<String, String> {
+    let mut parts = bind_value.splitn(4, ',');
+    let mods = parts.next().unwrap_or("").trim();
+    let key = parts.next().unwrap_or("").trim();
+    let dispatcher = parts.next().unwrap_or("").trim();
+    let args = parts.next().unwrap_or("").trim();
+    if key.is_empty() {
+        return Err(format!("bind {bind_value:?} has no key"));
+    }
+    if dispatcher != "exec" || args.is_empty() {
+        return Err(format!("bind {bind_value:?}: only `exec,<command>` binds can be applied"));
+    }
+    let mut combo: Vec<&str> = mods.split(|c: char| c == '_' || c.is_whitespace()).filter(|m| !m.is_empty()).collect();
+    combo.push(key);
+    Ok(format!("hl.bind({}, hl.dsp.exec_cmd({}))", lua_str(&combo.join(" + ")), lua_str(args)))
 }
 
 #[derive(Debug, Deserialize)]
@@ -90,4 +143,49 @@ pub fn layers() -> Vec<LayerClient> {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::bind_eval_expr;
+
+    #[test]
+    fn exec_bind_with_one_modifier() {
+        assert_eq!(
+            bind_eval_expr("SUPER,U,exec,breadpad").unwrap(),
+            "hl.bind('SUPER + U', hl.dsp.exec_cmd('breadpad'))"
+        );
+    }
+
+    #[test]
+    fn modifiers_split_on_underscore() {
+        assert_eq!(
+            bind_eval_expr("SUPER_SHIFT,U,exec,breadpad").unwrap(),
+            "hl.bind('SUPER + SHIFT + U', hl.dsp.exec_cmd('breadpad'))"
+        );
+    }
+
+    #[test]
+    fn empty_mods_field_binds_the_bare_key() {
+        assert_eq!(
+            bind_eval_expr(",XF86AudioMute,exec,wpctl set-mute @DEFAULT_SINK@ toggle").unwrap(),
+            "hl.bind('XF86AudioMute', hl.dsp.exec_cmd('wpctl set-mute @DEFAULT_SINK@ toggle'))"
+        );
+    }
+
+    #[test]
+    fn command_keeps_commas_quotes_and_backslashes() {
+        assert_eq!(
+            bind_eval_expr(r"SUPER,U,exec,sh -c 'a, b ; c' \x").unwrap(),
+            r"hl.bind('SUPER + U', hl.dsp.exec_cmd('sh -c \'a, b ; c\' \\x'))"
+        );
+    }
+
+    #[test]
+    fn non_exec_and_malformed_binds_are_rejected() {
+        assert!(bind_eval_expr("SUPER,Q,killactive,").is_err());
+        assert!(bind_eval_expr("SUPER,U,exec").is_err());
+        assert!(bind_eval_expr("SUPER").is_err());
+        assert!(bind_eval_expr("SUPER,,exec,x").is_err());
+    }
 }
