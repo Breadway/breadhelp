@@ -17,6 +17,12 @@ use std::time::Duration;
 /// stores and builds, e.g. `"SUPER,U,exec,breadpad"` (or `",XF86Foo,exec,x"`
 /// with no modifier). Only the `exec` dispatcher is supported, which is all
 /// binds.json entries can be turned into here.
+///
+/// The expression unbinds the exact `<mods> + <key>` combo before binding it,
+/// in the same eval, so the new bind replaces any existing bind for that combo
+/// instead of stacking on it. `hl.unbind` matches the combo string exactly, so
+/// other binds on the same key (for example a bare `F5` next to `SUPER+F5`) are
+/// left alone.
 pub fn rebind_temp(bind_value: &str) -> Result<(), String> {
     let expr = bind_eval_expr(bind_value)?;
     let out = bread_utils::proc::run("hyprctl", &["eval", &expr], Duration::from_secs(3));
@@ -48,7 +54,7 @@ fn lua_str(s: &str) -> String {
 }
 
 /// Turn `<mods>,<key>,exec,<command>` into
-/// `hl.bind('<MOD + MOD + key>', hl.dsp.exec_cmd('<command>'))`.
+/// `hl.unbind('<MOD + key>'); hl.bind('<MOD + key>', hl.dsp.exec_cmd('<command>'))`.
 /// Modifiers are separated by `_` or whitespace in the `<mods>` field and by
 /// ` + ` in `hl.bind`'s key string.
 fn bind_eval_expr(bind_value: &str) -> Result<String, String> {
@@ -65,7 +71,11 @@ fn bind_eval_expr(bind_value: &str) -> Result<String, String> {
     }
     let mut combo: Vec<&str> = mods.split(|c: char| c == '_' || c.is_whitespace()).filter(|m| !m.is_empty()).collect();
     combo.push(key);
-    Ok(format!("hl.bind({}, hl.dsp.exec_cmd({}))", lua_str(&combo.join(" + ")), lua_str(args)))
+    let combo = lua_str(&combo.join(" + "));
+    Ok(format!(
+        "hl.unbind({combo}); hl.bind({combo}, hl.dsp.exec_cmd({}))",
+        lua_str(args)
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -153,7 +163,7 @@ mod tests {
     fn exec_bind_with_one_modifier() {
         assert_eq!(
             bind_eval_expr("SUPER,U,exec,breadpad").unwrap(),
-            "hl.bind('SUPER + U', hl.dsp.exec_cmd('breadpad'))"
+            "hl.unbind('SUPER + U'); hl.bind('SUPER + U', hl.dsp.exec_cmd('breadpad'))"
         );
     }
 
@@ -161,7 +171,7 @@ mod tests {
     fn modifiers_split_on_underscore() {
         assert_eq!(
             bind_eval_expr("SUPER_SHIFT,U,exec,breadpad").unwrap(),
-            "hl.bind('SUPER + SHIFT + U', hl.dsp.exec_cmd('breadpad'))"
+            "hl.unbind('SUPER + SHIFT + U'); hl.bind('SUPER + SHIFT + U', hl.dsp.exec_cmd('breadpad'))"
         );
     }
 
@@ -169,15 +179,27 @@ mod tests {
     fn empty_mods_field_binds_the_bare_key() {
         assert_eq!(
             bind_eval_expr(",XF86AudioMute,exec,wpctl set-mute @DEFAULT_SINK@ toggle").unwrap(),
-            "hl.bind('XF86AudioMute', hl.dsp.exec_cmd('wpctl set-mute @DEFAULT_SINK@ toggle'))"
+            "hl.unbind('XF86AudioMute'); hl.bind('XF86AudioMute', hl.dsp.exec_cmd('wpctl set-mute @DEFAULT_SINK@ toggle'))"
         );
+    }
+
+    #[test]
+    fn unbind_runs_before_bind_for_the_same_combo() {
+        let expr = bind_eval_expr("SUPER,F5,exec,touch /tmp/x").unwrap();
+        let unbind = expr
+            .find("hl.unbind('SUPER + F5')")
+            .expect("unbind present");
+        let bind = expr.find("hl.bind('SUPER + F5'").expect("bind present");
+        assert!(unbind < bind, "{expr}");
+        assert_eq!(expr.matches("hl.unbind(").count(), 1);
+        assert_eq!(expr.matches("hl.bind(").count(), 1);
     }
 
     #[test]
     fn command_keeps_commas_quotes_and_backslashes() {
         assert_eq!(
             bind_eval_expr(r"SUPER,U,exec,sh -c 'a, b ; c' \x").unwrap(),
-            r"hl.bind('SUPER + U', hl.dsp.exec_cmd('sh -c \'a, b ; c\' \\x'))"
+            r"hl.unbind('SUPER + U'); hl.bind('SUPER + U', hl.dsp.exec_cmd('sh -c \'a, b ; c\' \\x'))"
         );
     }
 
