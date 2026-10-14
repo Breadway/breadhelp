@@ -12,8 +12,9 @@ pub struct Keybind {
     pub category: String,
     /// What the onboarding tour's "Try it" button runs for this bind.
     pub demo_cmd: Option<String>,
-    /// The `<dispatcher>,<args>` half of the real `hyprctl keyword bind`
-    /// value (e.g. `"exec,breadbox"`), only synthesized for `action: "exec"`
+    /// The `<dispatcher>,<args>` half of the `<mods>,<key>,<dispatcher>,<args>`
+    /// bind string `services::hyprland::rebind_temp` takes (e.g.
+    /// `"exec,breadbox"`), only synthesized for `action: "exec"`
     /// entries, since binds.json's other actions ("close", "fullscreen", ...)
     /// are this app's own loader abstraction, not real Hyprland dispatcher
     /// names, and there's no safe generic way to reconstruct one. Binds
@@ -99,10 +100,11 @@ fn normalize(combo: &str) -> String {
     combo.chars().filter(|c| !c.is_whitespace()).collect::<String>().to_lowercase()
 }
 
-/// Best-effort conversion of a human combo ("super + shift + u") into
-/// hyprctl's `<mods>_<mods>,<key>` form ("SUPER_SHIFT,U") for the temporary
-/// rebind feature: not a full Hyprland key-name parser, just enough for the
-/// common single-letter/named-key binds this viewer lists.
+/// Best-effort conversion of a human combo ("super + shift + u") into the
+/// `<mods>_<mods>,<key>` form ("SUPER_SHIFT,U", or ",U" with no modifier)
+/// that `services::hyprland::rebind_temp` parses for the temporary rebind
+/// feature: not a full Hyprland key-name parser, just enough for the common
+/// single-letter/named-key binds this viewer lists.
 pub fn to_hypr_mods_key(combo: &str) -> String {
     let parts: Vec<String> = combo
         .split(|c: char| c == '+' || c.is_whitespace())
@@ -111,7 +113,7 @@ pub fn to_hypr_mods_key(combo: &str) -> String {
         .collect();
     match parts.split_last() {
         None => String::new(),
-        Some((key, [])) => key.clone(),
+        Some((key, [])) => format!(",{key}"),
         Some((key, mods)) => format!("{},{}", mods.join("_"), key),
     }
 }
