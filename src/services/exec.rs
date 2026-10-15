@@ -17,6 +17,30 @@ pub fn run_argv(prog: &str, args: &[&str]) {
     }
 }
 
+/// Split a content-authored terminal command on whitespace into argv.
+/// No shell is involved downstream, so shell metacharacters in guide text
+/// can never be interpreted.
+pub fn split_argv(command: &str) -> Vec<String> {
+    command.split_whitespace().map(str::to_string).collect()
+}
+
+/// Open the BOS terminal (kitty, the same terminal bos-settings launches
+/// for terminal work) running `argv`, without a shell. Used for
+/// terminal-only commands such as `breadbug`, which need a TTY and fail
+/// when spawned bare from this GUI (its desktop entry is
+/// `Terminal=false`).
+pub fn run_terminal(argv: &[String]) {
+    if argv.is_empty() {
+        return;
+    }
+    let mut cmd = Command::new("kitty");
+    cmd.arg("-e");
+    cmd.args(argv);
+    if let Err(e) = cmd.spawn() {
+        eprintln!("breadhelp: failed to open terminal for `{argv:?}`: {e}");
+    }
+}
+
 /// `true` when `name` resolves to an executable on `PATH`.
 pub fn command_exists(name: &str) -> bool {
     std::env::var_os("PATH")
@@ -71,4 +95,33 @@ pub fn run_argv_reporting(prog: &str, args: &[&str], on_done: impl Fn(bool) + 's
             on_done(success);
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn terminal_commands_split_on_whitespace_only() {
+        assert_eq!(split_argv("breadbug"), vec!["breadbug".to_string()]);
+        assert_eq!(
+            split_argv("breadbug --app clip --save report.json"),
+            vec!["breadbug", "--app", "clip", "--save", "report.json"]
+        );
+    }
+
+    #[test]
+    fn shell_metacharacters_stay_literal_words() {
+        // These must reach the terminal as literal words, never interpreted:
+        // `run_terminal` passes argv straight to `kitty -e` with no shell.
+        assert_eq!(
+            split_argv("breadbug --notes $(evil) `evil` a;b | c"),
+            vec!["breadbug", "--notes", "$(evil)", "`evil`", "a;b", "|", "c"]
+        );
+    }
+
+    #[test]
+    fn blank_terminal_command_is_empty() {
+        assert!(split_argv("   ").is_empty());
+    }
 }

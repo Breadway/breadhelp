@@ -21,7 +21,10 @@ Each guide is a directory with:
 
 - `meta.toml`: title, difficulty, tags, related guides, estimated time
 - `content.md`: the guide body (constrained Markdown subset + `[Run]`/
-  `[Show Keybind]` tags, see `src/content/markdown.rs`)
+  `[Terminal]`/`[Show Keybind]` tags, see `src/content/markdown.rs`).
+  `[Run]` goes through a shell; `[Terminal]` splits on whitespace and opens
+  the BOS terminal with no shell, and is the only tag for terminal-only
+  commands such as `breadbug`.
 - `content.beginner.md`: optional, used in Beginner/Dad mode instead of
   `content.md` when present
 

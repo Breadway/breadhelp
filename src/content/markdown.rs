@@ -9,7 +9,10 @@
 //!
 //! Supported: `#`/`##` headings, one-block-per-line paragraphs, `- ` bullets,
 //! inline `**bold**`/`` `code` `` (rendered via GTK's own Pango markup), and
-//! two custom tags: `[Run]<command>[/Run]` (optional `|Label` suffix) and
+//! three custom tags: `[Run]<command>[/Run]` (optional `|Label` suffix, run
+//! through a shell like before), `[Terminal]<command>[/Terminal]` (optional
+//! `|Label` suffix, split on whitespace and run in the BOS terminal with no
+//! shell, for terminal-only commands such as `breadbug`), and
 //! `[Show Keybind]<combo>[/Show Keybind]`.
 
 use gtk4::prelude::*;
@@ -21,6 +24,7 @@ use super::keybinds::Keybind;
 pub enum Span {
     Text(String),
     Run { command: String, label: String },
+    Terminal { argv: Vec<String>, label: String },
     Keybind(String),
 }
 
@@ -54,22 +58,20 @@ pub fn parse(src: &str) -> Vec<Block> {
 fn parse_spans(text: &str) -> Vec<Span> {
     const RUN_OPEN: &str = "[Run]";
     const RUN_CLOSE: &str = "[/Run]";
+    const TERM_OPEN: &str = "[Terminal]";
+    const TERM_CLOSE: &str = "[/Terminal]";
     const KB_OPEN: &str = "[Show Keybind]";
     const KB_CLOSE: &str = "[/Show Keybind]";
 
+    // (offset, kind): 0 = shell run, 1 = terminal run, 2 = keybind.
     let mut spans = Vec::new();
     let mut rest = text;
     loop {
-        let run_idx = rest.find(RUN_OPEN);
-        let kb_idx = rest.find(KB_OPEN);
-        let next = match (run_idx, kb_idx) {
-            (Some(r), Some(k)) if r <= k => Some((r, true)),
-            (Some(_), Some(k)) => Some((k, false)),
-            (Some(r), None) => Some((r, true)),
-            (None, Some(k)) => Some((k, false)),
-            (None, None) => None,
-        };
-        let Some((idx, is_run)) = next else {
+        let run_idx = rest.find(RUN_OPEN).map(|i| (i, 0));
+        let term_idx = rest.find(TERM_OPEN).map(|i| (i, 1));
+        let kb_idx = rest.find(KB_OPEN).map(|i| (i, 2));
+        let next = [run_idx, term_idx, kb_idx].into_iter().flatten().min();
+        let Some((idx, kind)) = next else {
             if !rest.is_empty() {
                 spans.push(Span::Text(rest.to_string()));
             }
@@ -78,7 +80,11 @@ fn parse_spans(text: &str) -> Vec<Span> {
         if idx > 0 {
             spans.push(Span::Text(rest[..idx].to_string()));
         }
-        let (open_len, close_tag) = if is_run { (RUN_OPEN.len(), RUN_CLOSE) } else { (KB_OPEN.len(), KB_CLOSE) };
+        let (open_len, close_tag) = match kind {
+            0 => (RUN_OPEN.len(), RUN_CLOSE),
+            1 => (TERM_OPEN.len(), TERM_CLOSE),
+            _ => (KB_OPEN.len(), KB_CLOSE),
+        };
         let after = &rest[idx + open_len..];
         let Some(end) = after.find(close_tag) else {
             // Unterminated tag: keep the literal text rather than dropping it.
@@ -86,14 +92,21 @@ fn parse_spans(text: &str) -> Vec<Span> {
             break;
         };
         let inner = &after[..end];
-        if is_run {
+        if kind == 2 {
+            spans.push(Span::Keybind(inner.trim().to_string()));
+        } else {
             let (command, label) = match inner.split_once('|') {
                 Some((c, l)) => (c.trim().to_string(), l.trim().to_string()),
                 None => (inner.trim().to_string(), inner.trim().to_string()),
             };
-            spans.push(Span::Run { command, label });
-        } else {
-            spans.push(Span::Keybind(inner.trim().to_string()));
+            if kind == 0 {
+                spans.push(Span::Run { command, label });
+            } else {
+                spans.push(Span::Terminal {
+                    argv: crate::services::exec::split_argv(&command),
+                    label: if label.is_empty() { command } else { label },
+                });
+            }
         }
         rest = &after[end + close_tag.len()..];
     }
@@ -150,6 +163,21 @@ fn render_spans(spans: &[Span], binds: &[Keybind]) -> gtk4::Widget {
                 let cmd = command.clone();
                 btn.connect_clicked(move |_| crate::services::exec::run(&cmd));
                 row.append(&btn);
+            }
+            Span::Terminal { argv, label } => {
+                // No shell: the words go straight to `kitty -e`. An empty
+                // command parses to no argv and renders as plain text, so a
+                // typo can never spawn a bare terminal.
+                if argv.is_empty() {
+                    let lbl = Label::new(Some(label.as_str()));
+                    lbl.set_xalign(0.0);
+                    row.append(&lbl);
+                } else {
+                    let btn = Button::with_label(label);
+                    let argv = argv.clone();
+                    btn.connect_clicked(move |_| crate::services::exec::run_terminal(&argv));
+                    row.append(&btn);
+                }
             }
             Span::Keybind(combo) => {
                 let text = super::keybinds::find(binds, combo).map(|k| k.combo.clone()).unwrap_or_else(|| combo.clone());
@@ -233,5 +261,33 @@ mod tests {
     fn unterminated_tag_falls_back_to_text() {
         let spans = parse_spans("oops [Run]no closing tag");
         assert_eq!(spans, vec![Span::Text("oops ".into()), Span::Text("[Run]no closing tag".into())]);
+    }
+
+    #[test]
+    fn parses_terminal_tag_into_argv_without_a_shell() {
+        let spans = parse_spans("Click [Terminal]breadbug --app clip|Report a problem[/Terminal] now.");
+        assert_eq!(spans.len(), 3);
+        assert_eq!(
+            spans[1],
+            Span::Terminal {
+                argv: vec!["breadbug".into(), "--app".into(), "clip".into()],
+                label: "Report a problem".into(),
+            }
+        );
+    }
+
+    #[test]
+    fn parses_terminal_tag_without_label() {
+        let spans = parse_spans("[Terminal]breadbug[/Terminal]");
+        assert_eq!(
+            spans,
+            vec![Span::Terminal { argv: vec!["breadbug".into()], label: "breadbug".into() }]
+        );
+    }
+
+    #[test]
+    fn unterminated_terminal_tag_falls_back_to_text() {
+        let spans = parse_spans("oops [Terminal]no closing tag");
+        assert_eq!(spans, vec![Span::Text("oops ".into()), Span::Text("[Terminal]no closing tag".into())]);
     }
 }
