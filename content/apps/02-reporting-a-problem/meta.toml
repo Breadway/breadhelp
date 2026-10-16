@@ -1,0 +1,5 @@
+title = "Reporting a problem"
+difficulty = "beginner"
+tags = ["bug", "crash", "freeze", "breadbug", "report"]
+related = ["02-bug-reports-and-your-privacy"]
+estimated_minutes = 3

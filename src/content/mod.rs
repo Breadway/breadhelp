@@ -144,3 +144,124 @@ impl ContentStore {
         std::fs::read_to_string(guide.dir.join("content.md")).unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod shipped_content_tests {
+    use super::*;
+
+    fn shipped() -> BTreeMap<(String, String), Guide> {
+        let mut out = BTreeMap::new();
+        scan_root(&Path::new(env!("CARGO_MANIFEST_DIR")).join("content"), &mut out);
+        out
+    }
+
+    #[test]
+    fn every_shipped_guide_loads_and_has_a_body() {
+        let guides = shipped();
+        assert!(!guides.is_empty());
+        for ((cat, id), g) in &guides {
+            let body = std::fs::read_to_string(g.dir.join("content.md"))
+                .unwrap_or_else(|_| panic!("{cat}/{id} has no content.md"));
+            assert!(!markdown::parse(&body).is_empty(), "{cat}/{id} parses to nothing");
+            assert!(!g.meta.title.trim().is_empty(), "{cat}/{id} has no title");
+        }
+    }
+
+    #[test]
+    fn related_guides_resolve() {
+        let guides = shipped();
+        let ids: Vec<&str> = guides.keys().map(|(_, id)| id.as_str()).collect();
+        for ((cat, id), g) in &guides {
+            for rel in &g.meta.related {
+                assert!(ids.contains(&rel.as_str()), "{cat}/{id} relates to missing guide '{rel}'");
+            }
+        }
+    }
+
+    #[test]
+    fn the_breadbug_guides_match_shipped_behavior_and_track_planned_work() {
+        let guides = shipped();
+        let report = guides.get(&("apps".into(), "02-reporting-a-problem".into())).expect("how-to guide");
+        let privacy = guides
+            .get(&("advanced".into(), "02-bug-reports-and-your-privacy".into()))
+            .expect("privacy guide");
+        let report_body = std::fs::read_to_string(report.dir.join("content.md")).unwrap();
+        let privacy_body = std::fs::read_to_string(privacy.dir.join("content.md")).unwrap();
+
+        // The reporter is terminal-only, so the guide must launch it through
+        // the BOS terminal, never as a bare shell run.
+        assert!(report_body.contains("[Terminal]breadbug|Report a problem[/Terminal]"));
+        assert!(!report_body.contains("[Run]breadbug"));
+        // Executable today: list, preview, save.
+        for flow in ["breadbug list", "--dry-run", "--save"] {
+            assert!(report_body.contains(flow), "reporting guide lacks shipped flow: {flow}");
+        }
+        // Unmerged bread work is labeled planned, with the branch gates named.
+        assert!(report_body.contains("## Planned"));
+        for branch in ["feature/breadbug-upload", "feature/breadbug-status", "feature/breadbug-gui"] {
+            assert!(report_body.contains(branch), "reporting guide lacks gate: {branch}");
+        }
+        // Server-side commands must not read as runnable outside Planned.
+        let (shipped_text, planned_text) =
+            report_body.split_once("## Planned").expect("planned section");
+        for cmd in ["breadbug status", "breadbug delete", "breadbug queue"] {
+            assert!(
+                !shipped_text.contains(cmd),
+                "reporting guide presents {cmd} as shipped"
+            );
+            assert!(planned_text.contains(cmd), "planned section lacks {cmd}");
+        }
+
+        // Privacy matches the shipped schema sections and states the limits.
+        for section in [
+            "journal",
+            "runtime",
+            "markers",
+            "system",
+            "installed",
+            "embeddings",
+            "redactions",
+            "90 days",
+            "backup",
+            "cluster metadata",
+        ] {
+            assert!(
+                privacy_body.to_lowercase().contains(&section.to_lowercase()),
+                "privacy guide lacks: {section}"
+            );
+        }
+        // No rotation promise: the rotating install id is unmerged.
+        assert!(!privacy_body.contains("30 days"));
+        assert!(privacy_body.contains("no such promise applies"));
+        // Scrub limits: best effort, journal direct-read caveat.
+        assert!(privacy_body.contains("best effort"));
+        assert!(privacy_body.contains("journalctl"));
+    }
+
+    #[test]
+    fn the_privacy_guide_quotes_the_shared_consent_source() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let shared = std::fs::read_to_string(root.join("content/shared/breadbug-consent.md"))
+            .expect("shared consent source");
+        let (_, notice) = shared.split_once("## Proposed notice").expect("notice section");
+        let lines: Vec<&str> = notice
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .collect();
+        assert!(lines.len() > 5, "shared notice is unexpectedly short");
+        // Provenance: the file records which unmerged branch it came from.
+        assert!(shared.contains("feature/breadbug-consent"));
+        assert!(shared.contains("NOT merged"));
+
+        let mut guides = BTreeMap::new();
+        scan_root(&root.join("content"), &mut guides);
+        let privacy = guides
+            .get(&("advanced".into(), "02-bug-reports-and-your-privacy".into()))
+            .expect("privacy guide");
+        let privacy_body = std::fs::read_to_string(privacy.dir.join("content.md")).unwrap();
+        for line in &lines {
+            assert!(privacy_body.contains(line), "privacy guide drifts from shared source: {line}");
+        }
+    }
+}
