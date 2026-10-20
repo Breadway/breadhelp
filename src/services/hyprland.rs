@@ -30,7 +30,10 @@ pub fn rebind_temp(bind_value: &str) -> Result<(), String> {
     if out.success && reply == "ok" {
         Ok(())
     } else if reply.is_empty() {
-        Err(format!("hyprctl eval produced no reply ({})", out.stderr.trim()))
+        Err(format!(
+            "hyprctl eval produced no reply ({})",
+            out.stderr.trim()
+        ))
     } else {
         Err(format!("hyprctl eval replied {reply:?}"))
     }
@@ -67,9 +70,14 @@ fn bind_eval_expr(bind_value: &str) -> Result<String, String> {
         return Err(format!("bind {bind_value:?} has no key"));
     }
     if dispatcher != "exec" || args.is_empty() {
-        return Err(format!("bind {bind_value:?}: only `exec,<command>` binds can be applied"));
+        return Err(format!(
+            "bind {bind_value:?}: only `exec,<command>` binds can be applied"
+        ));
     }
-    let mut combo: Vec<&str> = mods.split(|c: char| c == '_' || c.is_whitespace()).filter(|m| !m.is_empty()).collect();
+    let mut combo: Vec<&str> = mods
+        .split(|c: char| c == '_' || c.is_whitespace())
+        .filter(|m| !m.is_empty())
+        .collect();
     combo.push(key);
     let combo = lua_str(&combo.join(" + "));
     Ok(format!(
@@ -111,11 +119,15 @@ fn query_json(cmd: &str) -> Option<serde_json::Value> {
 }
 
 pub fn clients() -> Vec<Client> {
-    query_json("clients").and_then(|v| serde_json::from_value(v).ok()).unwrap_or_default()
+    query_json("clients")
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default()
 }
 
 pub fn monitors() -> Vec<Monitor> {
-    query_json("monitors").and_then(|v| serde_json::from_value(v).ok()).unwrap_or_default()
+    query_json("monitors")
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default()
 }
 
 /// `hyprctl -j layers` nests surfaces as `{monitor_name: {levels: {level: [surface]}}}`

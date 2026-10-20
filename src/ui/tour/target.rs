@@ -29,13 +29,36 @@ pub fn resolve(target: &Target, display: &gdk4::Display) -> Option<Resolved> {
     let (rect, monitor_name) = match target {
         Target::None => return None,
         Target::Namespace(ns) => {
-            let layer = hyprland::layers().into_iter().find(|l| &l.namespace == ns)?;
-            (Rect { x: layer.x, y: layer.y, w: layer.w, h: layer.h }, layer.monitor)
+            let layer = hyprland::layers()
+                .into_iter()
+                .find(|l| &l.namespace == ns)?;
+            (
+                Rect {
+                    x: layer.x,
+                    y: layer.y,
+                    w: layer.w,
+                    h: layer.h,
+                },
+                layer.monitor,
+            )
         }
         Target::WindowClass(class) => {
-            let client = hyprland::clients().into_iter().find(|c| c.class.eq_ignore_ascii_case(class))?;
-            let name = hyprland::monitors().into_iter().find(|m| m.id == client.monitor)?.name;
-            (Rect { x: client.at.0, y: client.at.1, w: client.size.0, h: client.size.1 }, name)
+            let client = hyprland::clients()
+                .into_iter()
+                .find(|c| c.class.eq_ignore_ascii_case(class))?;
+            let name = hyprland::monitors()
+                .into_iter()
+                .find(|m| m.id == client.monitor)?
+                .name;
+            (
+                Rect {
+                    x: client.at.0,
+                    y: client.at.1,
+                    w: client.size.0,
+                    h: client.size.1,
+                },
+                name,
+            )
         }
     };
     let monitor = find_gdk_monitor(display, &monitor_name)?;
@@ -43,7 +66,11 @@ pub fn resolve(target: &Target, display: &gdk4::Display) -> Option<Resolved> {
 }
 
 fn find_gdk_monitor(display: &gdk4::Display, name: &str) -> Option<gdk4::Monitor> {
-    display.monitors().iter::<gdk4::Monitor>().filter_map(|m| m.ok()).find(|m| m.connector().as_deref() == Some(name))
+    display
+        .monitors()
+        .iter::<gdk4::Monitor>()
+        .filter_map(|m| m.ok())
+        .find(|m| m.connector().as_deref() == Some(name))
 }
 
 /// Falls back to this when a step has no target (nothing to resolve a
@@ -62,6 +89,8 @@ pub fn is_resolved(target: &Target) -> bool {
     match target {
         Target::None => true,
         Target::Namespace(ns) => hyprland::layers().iter().any(|l| &l.namespace == ns),
-        Target::WindowClass(class) => hyprland::clients().iter().any(|c| c.class.eq_ignore_ascii_case(class)),
+        Target::WindowClass(class) => hyprland::clients()
+            .iter()
+            .any(|c| c.class.eq_ignore_ascii_case(class)),
     }
 }

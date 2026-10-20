@@ -66,7 +66,9 @@ pub fn dispatch(window: &gtk4::ApplicationWindow, stack: &gtk4::Stack, req: Scre
                     dialog.connect_map(move |_| {
                         let output = output.clone();
                         gtk4::glib::timeout_add_local_once(SETTLE_DELAY, move || {
-                            finish(bread_screenshots::capture_region(0, 0, width, height, &output));
+                            finish(bread_screenshots::capture_region(
+                                0, 0, width, height, &output,
+                            ));
                         });
                     });
                 });
@@ -85,7 +87,9 @@ pub fn dispatch(window: &gtk4::ApplicationWindow, stack: &gtk4::Stack, req: Scre
     window.connect_map(move |_| {
         let output = output.clone();
         gtk4::glib::timeout_add_local_once(SETTLE_DELAY, move || {
-            finish(bread_screenshots::capture_region(0, 0, width, height, &output));
+            finish(bread_screenshots::capture_region(
+                0, 0, width, height, &output,
+            ));
         });
     });
     window.present();

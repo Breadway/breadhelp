@@ -1,5 +1,7 @@
 use gtk4::prelude::*;
-use gtk4::{Label, ListBox, ListBoxRow, Orientation, Paned, ScrolledWindow, SelectionMode, Stack, Widget};
+use gtk4::{
+    Label, ListBox, ListBoxRow, Orientation, Paned, ScrolledWindow, SelectionMode, Stack, Widget,
+};
 
 use crate::config::Mode;
 use crate::content::{keybinds::Keybind, ContentStore};
@@ -80,7 +82,10 @@ pub fn build(store: &ContentStore, binds: &[Keybind], mode: Mode) -> Widget {
         });
     }
 
-    let sidebar_scroller = ScrolledWindow::builder().child(&list).width_request(220).build();
+    let sidebar_scroller = ScrolledWindow::builder()
+        .child(&list)
+        .width_request(220)
+        .build();
     hpaned.set_start_child(Some(&sidebar_scroller));
     hpaned.set_end_child(Some(&stack));
 

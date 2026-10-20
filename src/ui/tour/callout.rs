@@ -132,5 +132,11 @@ pub fn build(
         next_btn.grab_focus();
     }
 
-    Callout { window, back_btn, next_btn, skip_btn, demo_btn }
+    Callout {
+        window,
+        back_btn,
+        next_btn,
+        skip_btn,
+        demo_btn,
+    }
 }

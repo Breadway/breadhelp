@@ -103,9 +103,18 @@ pub fn build(
 
     vbox.append(&keybind_viewer::build(binds));
 
-    let root = ScrolledWindow::builder().child(&vbox).vexpand(true).hexpand(true).build().upcast();
+    let root = ScrolledWindow::builder()
+        .child(&vbox)
+        .vexpand(true)
+        .hexpand(true)
+        .build()
+        .upcast();
 
-    Home { root, banner_revealer, banner_label }
+    Home {
+        root,
+        banner_revealer,
+        banner_label,
+    }
 }
 
 fn quick_fixes() -> Widget {
@@ -141,7 +150,11 @@ fn quick_fixes() -> Widget {
             let status = status.clone();
             let label = label.clone();
             crate::services::exec::run_reporting(&command, move |success| {
-                status.set_label(&if success { format!("{label}: done.") } else { format!("{label}: something went wrong.") });
+                status.set_label(&if success {
+                    format!("{label}: done.")
+                } else {
+                    format!("{label}: something went wrong.")
+                });
             });
         });
         flow.insert(&btn, -1);

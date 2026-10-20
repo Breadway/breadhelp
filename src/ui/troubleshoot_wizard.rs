@@ -18,7 +18,10 @@ use crate::content::troubleshoot::{self, SymptomNode};
 /// Curated symptom files with a human label: file stems aren't user-facing
 /// strings, and not every `_symptoms/*.toml` necessarily belongs on the
 /// top-level picker.
-const SYMPTOMS: &[(&str, &str)] = &[("no-sound", "No sound"), ("wifi-wont-connect", "Wi-Fi won't connect")];
+const SYMPTOMS: &[(&str, &str)] = &[
+    ("no-sound", "No sound"),
+    ("wifi-wont-connect", "Wi-Fi won't connect"),
+];
 
 struct Wizard {
     content: GBox,
@@ -46,7 +49,10 @@ pub fn open(parent: &impl IsA<gtk4::Window>, on_build: impl FnOnce(&Window)) {
     let content = GBox::new(Orientation::Vertical, 12);
     content.add_css_class("view-content");
 
-    let wizard = Rc::new(Wizard { content: content.clone(), trees: troubleshoot::load_all() });
+    let wizard = Rc::new(Wizard {
+        content: content.clone(),
+        trees: troubleshoot::load_all(),
+    });
     wizard.render_picker();
 
     window.set_child(Some(&content));
@@ -138,7 +144,11 @@ impl Wizard {
                 status_for_click.set_label("Running\u{2026}");
                 let status = status_for_click.clone();
                 crate::services::exec::run_reporting(&command, move |success| {
-                    status.set_label(if success { "Done." } else { "Something went wrong, see the terminal for details." });
+                    status.set_label(if success {
+                        "Done."
+                    } else {
+                        "Something went wrong, see the terminal for details."
+                    });
                 });
             });
             self.content.append(&run_btn);

@@ -85,4 +85,3 @@ pub fn load(_display: &gtk4::gdk::Display) {
 pub fn bind_window(window: &impl gtk4::prelude::IsA<gtk4::Native>) {
     bread_theme::gtk::bind_window_auto_with_app_css(window, |_| APP_CSS.to_string());
 }
-

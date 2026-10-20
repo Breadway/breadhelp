@@ -16,5 +16,10 @@ pub fn build(store: &ContentStore, guide: &Guide, simplified: bool, binds: &[Key
     let blocks = markdown::parse(&body);
     vbox.append(&markdown::render(&blocks, binds));
 
-    ScrolledWindow::builder().child(&vbox).vexpand(true).hexpand(true).build().upcast()
+    ScrolledWindow::builder()
+        .child(&vbox)
+        .vexpand(true)
+        .hexpand(true)
+        .build()
+        .upcast()
 }

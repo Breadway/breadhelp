@@ -129,7 +129,12 @@ pub fn on_tour_event(id: &str) {
             return None;
         }
         state.confirmed = true;
-        Some((state.index, state.steps[state.index].clone(), state.binds.clone(), state.steps.len()))
+        Some((
+            state.index,
+            state.steps[state.index].clone(),
+            state.binds.clone(),
+            state.steps.len(),
+        ))
     });
     if let Some((index, step, binds, total)) = hit {
         // force_no_target=true: we already have authoritative confirmation
@@ -141,7 +146,9 @@ pub fn on_tour_event(id: &str) {
 
 fn go_next() {
     let next = STATE.with(|cell| cell.borrow().as_ref().map(|s| (s.index + 1, s.steps.len())));
-    let Some((next_index, total)) = next else { return };
+    let Some((next_index, total)) = next else {
+        return;
+    };
     if next_index >= total {
         finish();
     } else {
@@ -204,11 +211,17 @@ fn enter_step(index: usize) {
 
     let (step, binds, total) = STATE.with(|cell| {
         let mut borrow = cell.borrow_mut();
-        let state = borrow.as_mut().expect("enter_step called with no active tour");
+        let state = borrow
+            .as_mut()
+            .expect("enter_step called with no active tour");
         state.index = index;
         state.confirmed = false;
         state.hint_visible = false;
-        (state.steps[index].clone(), state.binds.clone(), state.steps.len())
+        (
+            state.steps[index].clone(),
+            state.binds.clone(),
+            state.steps.len(),
+        )
     });
 
     let mut cfg = State::load();
@@ -233,7 +246,8 @@ fn enter_step(index: usize) {
 
     if let Success::Timeout(secs) = step.success() {
         let source = glib::timeout_add_seconds_local(secs as u32, move || {
-            let still_current = STATE.with(|cell| cell.borrow().as_ref().map(|s| s.index)) == Some(index);
+            let still_current =
+                STATE.with(|cell| cell.borrow().as_ref().map(|s| s.index)) == Some(index);
             // Clear our own handle before advancing rather than letting
             // `teardown_visuals` call `.remove()` on us: this closure is
             // already mid-dispatch and about to return `Break`, and self-
@@ -264,7 +278,8 @@ fn enter_step(index: usize) {
 /// process, and Next is always available as a manual escape hatch anyway.
 fn schedule_poll(index: usize) {
     let source = glib::timeout_add_local(WATCH_POLL_INTERVAL, move || {
-        let still_current = STATE.with(|cell| cell.borrow().as_ref().map(|s| s.index)) == Some(index);
+        let still_current =
+            STATE.with(|cell| cell.borrow().as_ref().map(|s| s.index)) == Some(index);
         if !still_current {
             return glib::ControlFlow::Break;
         }
@@ -309,7 +324,10 @@ fn schedule_hint(index: usize) {
         });
         let should_show = STATE.with(|cell| {
             let borrow = cell.borrow();
-            borrow.as_ref().map(|s| s.index == index && !s.confirmed).unwrap_or(false)
+            borrow
+                .as_ref()
+                .map(|s| s.index == index && !s.confirmed)
+                .unwrap_or(false)
         });
         if should_show {
             let (step, binds, total) = STATE.with(|cell| {
@@ -334,7 +352,9 @@ fn schedule_hint(index: usize) {
 fn trigger_demo() {
     let launch = STATE.with(|cell| {
         let borrow = cell.borrow();
-        borrow.as_ref().and_then(|s| s.steps[s.index].launch.clone())
+        borrow
+            .as_ref()
+            .and_then(|s| s.steps[s.index].launch.clone())
     });
     if let Some(cmd) = launch {
         exec::run(&cmd);
@@ -356,7 +376,12 @@ fn render_step(index: usize, step: &Step, binds: &[Keybind], is_last: bool, forc
     let (display, total, confirmed, hint_visible) = STATE.with(|cell| {
         let borrow = cell.borrow();
         let s = borrow.as_ref().unwrap();
-        (s.display.clone(), s.steps.len(), s.confirmed, s.hint_visible)
+        (
+            s.display.clone(),
+            s.steps.len(),
+            s.confirmed,
+            s.hint_visible,
+        )
     });
 
     // `force_no_target` is set by `on_tour_event`'s confirmation path: a
@@ -369,8 +394,15 @@ fn render_step(index: usize, step: &Step, binds: &[Keybind], is_last: bool, forc
     // real compositor event itself, so that path skips re-querying live
     // state entirely rather than trusting a `hyprctl` snapshot that may not
     // have caught up yet.
-    let resolved = if force_no_target { None } else { target::resolve(&step.target(), &display) };
-    let monitor = resolved.as_ref().map(|r| r.monitor.clone()).or_else(|| target::focused_monitor(&display));
+    let resolved = if force_no_target {
+        None
+    } else {
+        target::resolve(&step.target(), &display)
+    };
+    let monitor = resolved
+        .as_ref()
+        .map(|r| r.monitor.clone())
+        .or_else(|| target::focused_monitor(&display));
     let Some(monitor) = monitor else { return };
     let geo = monitor.geometry();
     let monitor_size = (geo.width(), geo.height());
@@ -408,7 +440,18 @@ fn render_step(index: usize, step: &Step, binds: &[Keybind], is_last: bool, forc
     // once `rect` resolves, the user can plainly see it themselves.
     let show_demo = hint_visible && !confirmed && rect.is_none() && step.launch.is_some();
 
-    let callout = callout::build(&monitor, rect, monitor_size, step, binds, index, total, is_last, confirmed, show_demo);
+    let callout = callout::build(
+        &monitor,
+        rect,
+        monitor_size,
+        step,
+        binds,
+        index,
+        total,
+        is_last,
+        confirmed,
+        show_demo,
+    );
     callout.back_btn.connect_clicked(|_| go_back());
     callout.next_btn.connect_clicked(|_| go_next());
     callout.skip_btn.connect_clicked(|_| skip_tour());
@@ -434,14 +477,21 @@ fn is_near_fullscreen(rect: target::Rect, monitor_size: (i32, i32)) -> bool {
 }
 
 fn apply_rebind_for_step(step: &Step, binds: &[Keybind]) {
-    let (Some(combo), Some(event_id)) = (&step.rebind_combo, &step.success_event) else { return };
-    let Some(kb) = keybinds::find(binds, combo) else { return };
+    let (Some(combo), Some(event_id)) = (&step.rebind_combo, &step.success_event) else {
+        return;
+    };
+    let Some(kb) = keybinds::find(binds, combo) else {
+        return;
+    };
     let Some(raw) = &kb.raw else { return };
-    let Some(command) = raw.strip_prefix("exec,") else { return };
+    let Some(command) = raw.strip_prefix("exec,") else {
+        return;
+    };
     let mods_key = keybinds::to_hypr_mods_key(&kb.combo);
     let original_bind_value = format!("{mods_key},{raw}");
     let escaped = command.replace('\'', "'\\''");
-    let chained_bind_value = format!("{mods_key},exec,sh -c '{escaped} ; breadhelp --tour-event {event_id}'");
+    let chained_bind_value =
+        format!("{mods_key},exec,sh -c '{escaped} ; breadhelp --tour-event {event_id}'");
     let mut cfg = State::load();
     cfg.set_pending_rebind(&mods_key, &original_bind_value);
     if let Err(e) = hyprland::rebind_temp(&chained_bind_value) {

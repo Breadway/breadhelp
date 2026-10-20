@@ -94,11 +94,19 @@ pub fn parse(args: &[std::ffi::OsString]) -> Action {
         } else if arg == "--output" {
             action.output = it.next().and_then(|s| s.to_str()).map(str::to_string);
         } else if arg == "--width" {
-            if let Some(v) = it.next().and_then(|s| s.to_str()).and_then(|s| s.parse().ok()) {
+            if let Some(v) = it
+                .next()
+                .and_then(|s| s.to_str())
+                .and_then(|s| s.parse().ok())
+            {
                 action.width = v;
             }
         } else if arg == "--height" {
-            if let Some(v) = it.next().and_then(|s| s.to_str()).and_then(|s| s.parse().ok()) {
+            if let Some(v) = it
+                .next()
+                .and_then(|s| s.to_str())
+                .and_then(|s| s.parse().ok())
+            {
                 action.height = v;
             }
         }

@@ -1,7 +1,10 @@
 use std::rc::Rc;
 
 use gtk4::prelude::*;
-use gtk4::{Box as GBox, Entry, Label, ListBox, ListBoxRow, Orientation, Paned, ScrolledWindow, SelectionMode, Widget};
+use gtk4::{
+    Box as GBox, Entry, Label, ListBox, ListBoxRow, Orientation, Paned, ScrolledWindow,
+    SelectionMode, Widget,
+};
 
 use crate::config::Mode;
 use crate::content::{keybinds::Keybind, ContentStore};
@@ -16,20 +19,50 @@ struct CommandEntry {
 /// A small, curated command gallery: not every `bread*` binary, just the
 /// ones worth surfacing to someone searching for "what can I run".
 const COMMANDS: &[CommandEntry] = &[
-    CommandEntry { name: "bos-update", description: "Update both the system (pacman) and the bread ecosystem (bakery) in one go." },
-    CommandEntry { name: "bos-settings", description: "Open BOS Settings." },
-    CommandEntry { name: "breadbox", description: "Open the app launcher." },
-    CommandEntry { name: "breadpad", description: "Open notes/reminders." },
-    CommandEntry { name: "breadman", description: "Open the notes/task manager." },
-    CommandEntry { name: "breadpaper", description: "Open the wallpaper picker." },
-    CommandEntry { name: "breadclip", description: "Open clipboard history." },
-    CommandEntry { name: "breadcrumbs", description: "Manage Wi-Fi profiles." },
+    CommandEntry {
+        name: "bos-update",
+        description: "Update both the system (pacman) and the bread ecosystem (bakery) in one go.",
+    },
+    CommandEntry {
+        name: "bos-settings",
+        description: "Open BOS Settings.",
+    },
+    CommandEntry {
+        name: "breadbox",
+        description: "Open the app launcher.",
+    },
+    CommandEntry {
+        name: "breadpad",
+        description: "Open notes/reminders.",
+    },
+    CommandEntry {
+        name: "breadman",
+        description: "Open the notes/task manager.",
+    },
+    CommandEntry {
+        name: "breadpaper",
+        description: "Open the wallpaper picker.",
+    },
+    CommandEntry {
+        name: "breadclip",
+        description: "Open clipboard history.",
+    },
+    CommandEntry {
+        name: "breadcrumbs",
+        description: "Manage Wi-Fi profiles.",
+    },
 ];
 
 enum Kind {
-    Guide { category: String, id: String },
+    Guide {
+        category: String,
+        id: String,
+    },
     Keybind(Keybind),
-    Command { name: &'static str, description: &'static str },
+    Command {
+        name: &'static str,
+        description: &'static str,
+    },
 }
 
 struct IndexEntry {
@@ -45,20 +78,30 @@ fn build_index(store: &ContentStore, binds: &[Keybind]) -> Vec<IndexEntry> {
         index.push(IndexEntry {
             label: guide.meta.title.clone(),
             haystack,
-            kind: Kind::Guide { category: guide.category.clone(), id: guide.id.clone() },
+            kind: Kind::Guide {
+                category: guide.category.clone(),
+                id: guide.id.clone(),
+            },
         });
     }
     for bind in binds {
         let label = format!("{}: {}", bind.combo, bind.action);
         let haystack = label.to_lowercase();
-        index.push(IndexEntry { label, haystack, kind: Kind::Keybind(bind.clone()) });
+        index.push(IndexEntry {
+            label,
+            haystack,
+            kind: Kind::Keybind(bind.clone()),
+        });
     }
     for cmd in COMMANDS {
         let haystack = format!("{} {}", cmd.name, cmd.description).to_lowercase();
         index.push(IndexEntry {
             label: cmd.name.to_string(),
             haystack,
-            kind: Kind::Command { name: cmd.name, description: cmd.description },
+            kind: Kind::Command {
+                name: cmd.name,
+                description: cmd.description,
+            },
         });
     }
     index
@@ -81,12 +124,19 @@ pub fn build(store: Rc<ContentStore>, binds: Rc<Vec<Keybind>>, mode: Mode) -> Wi
     results_list.set_selection_mode(SelectionMode::None);
     results_list.set_activate_on_single_click(true);
     results_list.add_css_class("boxed-list");
-    let results_scroller = ScrolledWindow::builder().child(&results_list).vexpand(true).build();
+    let results_scroller = ScrolledWindow::builder()
+        .child(&results_list)
+        .vexpand(true)
+        .build();
     left.append(&results_scroller);
 
     let detail = GBox::new(Orientation::Vertical, 10);
     detail.add_css_class("view-content");
-    let detail_scroller = ScrolledWindow::builder().child(&detail).vexpand(true).hexpand(true).build();
+    let detail_scroller = ScrolledWindow::builder()
+        .child(&detail)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
 
     let index = Rc::new(build_index(&store, &binds));
 
@@ -126,7 +176,9 @@ pub fn build(store: Rc<ContentStore>, binds: Rc<Vec<Keybind>>, mode: Mode) -> Wi
     });
 
     results_list.connect_row_activated(move |_, row| {
-        let Ok(i) = row.widget_name().parse::<usize>() else { return };
+        let Ok(i) = row.widget_name().parse::<usize>() else {
+            return;
+        };
         let Some(entry) = index.get(i) else { return };
 
         while let Some(child) = detail.first_child() {
@@ -136,7 +188,12 @@ pub fn build(store: Rc<ContentStore>, binds: Rc<Vec<Keybind>>, mode: Mode) -> Wi
         match &entry.kind {
             Kind::Guide { category, id } => {
                 if let Some(guide) = store.guide(category, id) {
-                    detail.append(&guide_view::build(&store, guide, mode.is_simplified(), &binds));
+                    detail.append(&guide_view::build(
+                        &store,
+                        guide,
+                        mode.is_simplified(),
+                        &binds,
+                    ));
                 }
             }
             Kind::Keybind(bind) => {
