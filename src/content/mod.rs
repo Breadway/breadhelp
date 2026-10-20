@@ -280,6 +280,32 @@ mod shipped_content_tests {
         // Scrub limits: best effort, journal direct-read caveat.
         assert!(privacy_body.contains("best effort"));
         assert!(privacy_body.contains("journalctl"));
+        // Corrected claims: each sentence below was checked against source.
+        // Token formats are replaced with <SECRET>; <TOKEN> is only the random-string rule.
+        assert!(privacy_body.contains("`<SECRET>`"));
+        assert!(!privacy_body.contains("(`<TOKEN>`)"));
+        // Local-only embedding and no third-party model calls (card requirement).
+        assert!(privacy_body.contains("literal loopback IP address"));
+        assert!(privacy_body.contains("makes no calls to third-party model APIs"));
+        // Cluster metadata: title, vector and install-hash membership survive a delete.
+        assert!(privacy_body.contains("a title taken from report text"));
+        assert!(privacy_body.contains("an embedding vector"));
+        assert!(privacy_body.contains("BUG-36"));
+        // Memory: the guarantee is what is kept or sent, not that memory is never read.
+        assert!(
+            privacy_body.contains("No memory contents, registers or environment are kept or sent")
+        );
+        assert!(!privacy_body.contains("It never reads memory"));
+        // Queue: nothing retries on its own.
+        assert!(privacy_body.contains("Nothing retries a queued report by itself"));
+        assert!(!privacy_body.contains("retries with increasing waits"));
+        // Daily status poll and the release status section.
+        assert!(privacy_body.contains("once a day"));
+        assert!(privacy_body.contains("## Release status"));
+        // Plain HTTP: the check is a prefix test today; the tracked bug is named.
+        assert!(privacy_body.contains("BREAD-55"));
+        // Stopped markers are rejected by the server; the tracked bug is named.
+        assert!(privacy_body.contains("BREAD-57"));
     }
 
     #[test]
@@ -297,6 +323,12 @@ mod shipped_content_tests {
         // Provenance: the file records that it copies the merged bread constant.
         assert!(shared.contains("CONSENT_TEXT"));
         assert!(shared.contains("bread-bug/src/consent.rs"));
+        // Why this test compares against breadhelp's own copy and not against
+        // bread's constant: breadhelp cannot depend on bread's Rust crate, so CI
+        // has no bread source to read. The shared file is therefore checked
+        // against bread by scripts/check-consent-sync.py, which needs a bread
+        // checkout and is run by hand whenever the notice text changes. This
+        // test then checks that the privacy guide quotes the shared file.
 
         let mut guides = BTreeMap::new();
         scan_root(&root.join("content"), &mut guides);
