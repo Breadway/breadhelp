@@ -1,50 +1,72 @@
 # Reporting a problem
 
-If a bread app crashed, froze, or isn't behaving, you can build a report, read exactly what it contains, and then save it to a file or send it. Nothing is sent unless you choose Send, and sending is off by default.
+If a bread app crashed, froze, or isn't behaving, you can build a report, read exactly what it contains, then save it to a file or send it. Nothing is sent unless you choose Send, and sending is off by default.
 
 - [Terminal]breadbug|Report a problem[/Terminal]
 
-The button opens a terminal running `breadbug`. The reporter is a terminal program: it needs a keyboard and screen of its own, so this help window launches it in the BOS terminal rather than as a bare command.
+The button opens a terminal running `breadbug`. The reporter is a terminal program, so this help window launches it in the BOS terminal rather than as a bare command.
 
 ## Report a crash or a freeze
 
-- Press **Super + Shift + B**, or wait for the notification after a bread app crashes or freezes and choose **Review report**.
+- Press **Super + Shift + B** to open the reporter.
 - Pick the app that has the problem. Apps that recently crashed or froze are listed first.
-- Say what happened: a crash, a freeze, or something behaving wrongly. You can add a sentence in your own words. Do not paste passwords or private text. It is scrubbed, but you are the best judge of what is private.
+- Choose what happened: crash, freeze, or behavior.
+- Add a note in your own words if you want to. Do not paste passwords or private text. It is scrubbed, but you are the best judge of what is private.
+
+The first time you run it, breadbug shows a short notice and waits for Enter. Press `q` to stop without recording that you read it. It shows again next time.
 
 ## What the preview shows
 
-Before anything can be sent, breadbug shows the report:
+Before anything can be sent, breadbug prints a summary of the report:
 
-- Counts for each part of the report: crash and freeze records, app log lines, daemon warnings, event names, journal lines and installed apps.
-- What the scrubber replaced, by category, such as names, addresses and tokens.
-- A SHA-256 hash of the exact bytes. Choose **v** (view everything) to see those bytes.
+- The app and the report type.
+- A SHA-256 hash of the exact report bytes.
+- The size of the report.
+- Counts for each part of the report: crash and freeze records, app log lines, daemon warnings, event names, journal lines, live stack frames and installed apps.
+- Your note, if you wrote one.
+- What the scrubber replaced, by category, for example `2 IP, 1 USER`. If it replaced nothing, it says so.
+
+Then it asks what you want to do:
+
+- **v** shows the whole report, which is the exact text that would be sent.
+- **f** saves it to a file.
+- **s** sends it, if sending is on.
+- **c** cancels. Nothing is sent or saved.
 
 ## Save a report to a file
 
-Choose **f** (save to a file) and give a path, or run `breadbug --app clip --save report.json`. This writes the exact previewed bytes, readable only by you, and prints the hash. Nothing is sent.
+Choose **f**, then give a file name. Pressing Enter accepts the default, `breadbug-APP-UNIXTIME.json`, where the last part is the report's creation time in seconds since 1970. The file is written in the folder you ran it from, unless you give a path.
+
+Breadbug writes the exact previewed bytes and makes the file readable only by you (mode 0600). It prints the hash. Nothing is sent. A save is recorded in your local history.
+
+You can also save without the menu: `breadbug --app clip --save report.json`.
 
 ## Send a report
 
 Sending needs two things: sending switched on, and an explicit Send for that report.
 
 - Turn sending on with `breadbug config upload on`. It is off by default.
-- Choose **s** (send) in the preview, or run `breadbug --app clip --send`.
+- In the preview, choose **s**. Or run `breadbug --app clip --send`, which prints the summary and sends it.
 
-A sent report returns a receipt, which breadbug prints. Keep it if you want to delete the report later.
+A successful send prints a receipt. It also prints the `breadbug delete` command when the server gave a deletion token. Keep the receipt if you want to delete the report later.
 
-If the server cannot be reached, the report is saved to an offline queue and retried later. See it with `breadbug queue`.
+If the server cannot be reached, the exact report is kept in an offline queue. See it with `breadbug queue`. Send the queue with `breadbug queue flush`. A report the server rejects is dropped.
 
 ## Delete a report you sent
 
 - `breadbug history` lists the reports you sent or saved, with their receipts.
-- `breadbug delete <receipt>` asks the server to delete the report and then removes it from your history. It needs sending to be on, and it works only on the machine that sent the report.
+- `breadbug delete <receipt>` asks the server to delete the report, then removes it from your history.
 
-The guide "Bug reports and your privacy" lists exactly what is collected and how long it is kept.
+Two conditions apply:
+
+- Sending must be on, because `delete` contacts the server.
+- It works only on the machine that sent the report. The deletion token is kept in your local history and nowhere else. A report that the server recognised as an identical earlier send has no token here, so it cannot be deleted from this machine.
+
+The guide "Bug reports and your privacy" says exactly what is collected, what the server keeps, and what a delete does not remove.
 
 ## Check on your reports
 
-- `breadbug status` asks the server how your sent reports are doing, and tells you when one is fixed in a version newer than yours. It only checks receipts you hold.
+- `breadbug status` asks the server how your sent reports are doing. It tells you when one is fixed in a version newer than yours. It only checks receipts you hold, and it needs sending to be on.
 
 ## Without the menu
 
@@ -58,5 +80,5 @@ Run bare `breadbug` with no terminal attached and it stops with an error telling
 
 ## Not yet shipped
 
-- A windowed reporter (`breadbug-gui`) is in the bread code but is not wired into BOS yet, so the shortcut and the notification open the terminal reporter.
+- A windowed reporter (`breadbug-gui`) is in the bread code, but it is not wired into BOS yet. The shortcut and the notification open the terminal reporter.
 - A Bug reports page in bos-settings is not there yet, so sending is switched on from the terminal.

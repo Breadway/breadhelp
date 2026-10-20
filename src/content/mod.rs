@@ -271,9 +271,12 @@ mod shipped_content_tests {
                 "privacy guide lacks: {section}"
             );
         }
-        // The install id is random and replaced every 30 days, on this machine.
-        assert!(privacy_body.contains("replaced every 30 days"));
+        // The install id is random, stored on this machine, and replaced once it is older than 30 days.
+        assert!(privacy_body.contains("replaced when it is older than 30 days"));
         assert!(!privacy_body.contains("no such promise applies"));
+        // Retention and deletion claims must be the ones the server code makes.
+        assert!(privacy_body.contains("BREADBUG_RETENTION_DAYS"));
+        assert!(privacy_body.contains("Breadboard issues"));
         // Scrub limits: best effort, journal direct-read caveat.
         assert!(privacy_body.contains("best effort"));
         assert!(privacy_body.contains("journalctl"));
@@ -284,9 +287,7 @@ mod shipped_content_tests {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
         let shared = std::fs::read_to_string(root.join("content/shared/breadbug-consent.md"))
             .expect("shared consent source");
-        let (_, notice) = shared
-            .split_once("## Notice")
-            .expect("notice section");
+        let (_, notice) = shared.split_once("## Notice").expect("notice section");
         let lines: Vec<&str> = notice
             .lines()
             .map(str::trim)
@@ -309,5 +310,24 @@ mod shipped_content_tests {
                 "privacy guide drifts from shared source: {line}"
             );
         }
+        // The guide's copy must also keep the paragraph order of the shared notice.
+        let notice_text = lines.join(" ");
+        let start = privacy_body
+            .find("Reporting a problem")
+            .expect("consent heading in privacy guide");
+        let rest = &privacy_body[start..];
+        let guide_block = rest
+            .split_once("## Not yet shipped")
+            .map_or(rest, |(a, _)| a);
+        let guide_text = guide_block
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert!(
+            guide_text.contains(&notice_text),
+            "privacy guide consent block differs from shared notice"
+        );
     }
 }

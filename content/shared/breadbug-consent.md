@@ -1,13 +1,8 @@
-# Shared breadbug consent text (single source inside breadhelp)
+# Shared breadbug consent text
 
-Provenance: the wording below is copied from bread `bread-bug/src/consent.rs`
-(`CONSENT_TEXT`) on bread `main`, where the consent notice is merged and shown by
-the terminal reporter and the GUI. It must stay identical to that constant.
+Source of truth: `CONSENT_TEXT` in bread `bread-bug/src/consent.rs` (bread `main`, merged in PR 31). The reporter shows it before a first session. breadbug-gui reads the same constant. The text below must match that constant exactly, line for line. A test in `src/content/mod.rs` checks that the privacy guide quotes it word for word.
 
-Cross-repo prerequisites (tracked, not claimed): a Bug reports page in
-bos-settings that reads this text, and publication on the BOS site. Neither
-exists yet, so this breadhelp copy is still the only place the notice is kept
-apart from the code.
+Cross-repo gates, not done: bos-settings does not yet read this text (no Bug reports page exists), and the BOS site does not publish it. Until a single source is read by both, this copy is the breadhelp copy only.
 
 ## Notice
 
