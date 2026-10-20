@@ -62,7 +62,11 @@ pub fn load() -> Vec<Keybind> {
             return Vec::new();
         }
     };
-    let default_mods = if file.default_mods.is_empty() { vec!["SUPER".to_string()] } else { file.default_mods };
+    let default_mods = if file.default_mods.is_empty() {
+        vec!["SUPER".to_string()]
+    } else {
+        file.default_mods
+    };
 
     file.bindings
         .into_iter()
@@ -74,9 +78,16 @@ pub fn load() -> Vec<Keybind> {
             let combo = if mods.is_empty() {
                 entry.key.to_lowercase()
             } else {
-                format!("{} + {}", mods.join(" + ").to_lowercase(), entry.key.to_lowercase())
+                format!(
+                    "{} + {}",
+                    mods.join(" + ").to_lowercase(),
+                    entry.key.to_lowercase()
+                )
             };
-            let raw = (entry.action == "exec").then(|| entry.command.clone()).flatten().map(|c| format!("exec,{c}"));
+            let raw = (entry.action == "exec")
+                .then(|| entry.command.clone())
+                .flatten()
+                .map(|c| format!("exec,{c}"));
             Keybind {
                 combo,
                 action: entry.label.unwrap_or(entry.action),
@@ -97,7 +108,11 @@ pub fn find<'a>(binds: &'a [Keybind], combo: &str) -> Option<&'a Keybind> {
 }
 
 fn normalize(combo: &str) -> String {
-    combo.chars().filter(|c| !c.is_whitespace()).collect::<String>().to_lowercase()
+    combo
+        .chars()
+        .filter(|c| !c.is_whitespace())
+        .collect::<String>()
+        .to_lowercase()
 }
 
 /// Best-effort conversion of a human combo ("super + shift + u") into the

@@ -1,18 +1,15 @@
 # Shared breadbug consent text (single source inside breadhelp)
 
-Provenance: the proposed wording below is taken from bread
-`feature/breadbug-consent` (`bread-bug/src/consent.rs`, CONSENT_TEXT) at
-1e49507a6c506fa1023bf3c201c574ed5abc763f. That branch is NOT merged, so no
-shipped reporter or settings page shows this text yet. HELP-10 requires this
-statement to become the same text the reporter shows and the settings page
-shows; until that branch lands, the privacy guide quotes the proposal from
-this file, and both guides point here instead of each carrying their own copy.
+Provenance: the wording below is copied from bread `bread-bug/src/consent.rs`
+(`CONSENT_TEXT`) on bread `main`, where the consent notice is merged and shown by
+the terminal reporter and the GUI. It must stay identical to that constant.
 
-Cross-repo prerequisites (tracked, not claimed): bread
-`feature/breadbug-consent` merged, a Bug reports page in bos-settings, and
-publication on the BOS site. None of the three exists yet.
+Cross-repo prerequisites (tracked, not claimed): a Bug reports page in
+bos-settings that reads this text, and publication on the BOS site. Neither
+exists yet, so this breadhelp copy is still the only place the notice is kept
+apart from the code.
 
-## Proposed notice
+## Notice
 
 Reporting a problem
 

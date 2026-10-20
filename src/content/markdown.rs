@@ -120,7 +120,10 @@ pub fn render(blocks: &[Block], binds: &[Keybind]) -> gtk4::Widget {
             Block::Heading(level, text) => {
                 let lbl = Label::new(None);
                 let size = if *level == 1 { "large" } else { "medium" };
-                lbl.set_markup(&format!("<b><span size='{size}'>{}</span></b>", glib::markup_escape_text(text)));
+                lbl.set_markup(&format!(
+                    "<b><span size='{size}'>{}</span></b>",
+                    glib::markup_escape_text(text)
+                ));
                 lbl.set_xalign(0.0);
                 lbl.set_wrap(true);
                 vbox.append(&lbl);
@@ -180,7 +183,9 @@ fn render_spans(spans: &[Span], binds: &[Keybind]) -> gtk4::Widget {
                 }
             }
             Span::Keybind(combo) => {
-                let text = super::keybinds::find(binds, combo).map(|k| k.combo.clone()).unwrap_or_else(|| combo.clone());
+                let text = super::keybinds::find(binds, combo)
+                    .map(|k| k.combo.clone())
+                    .unwrap_or_else(|| combo.clone());
                 let chip = Label::new(Some(&text));
                 chip.add_css_class("keybind-chip");
                 row.append(&chip);
@@ -230,7 +235,10 @@ mod tests {
         assert!(matches!(&spans[0], Span::Text(t) if t == "Click "));
         assert_eq!(
             spans[1],
-            Span::Run { command: "bos-update".into(), label: "Update everything".into() }
+            Span::Run {
+                command: "bos-update".into(),
+                label: "Update everything".into()
+            }
         );
         assert!(matches!(&spans[2], Span::Text(t) if t == " to update."));
     }
@@ -238,7 +246,13 @@ mod tests {
     #[test]
     fn parses_run_tag_without_label() {
         let spans = parse_spans("[Run]breadpad[/Run]");
-        assert_eq!(spans, vec![Span::Run { command: "breadpad".into(), label: "breadpad".into() }]);
+        assert_eq!(
+            spans,
+            vec![Span::Run {
+                command: "breadpad".into(),
+                label: "breadpad".into()
+            }]
+        );
     }
 
     #[test]
@@ -249,10 +263,17 @@ mod tests {
 
     #[test]
     fn counts_multiple_tags_in_one_line() {
-        let spans =
-            parse_spans("[Run]a[/Run] then [Show Keybind]super+/[/Show Keybind] then [Run]b|B[/Run]");
-        let run_count = spans.iter().filter(|s| matches!(s, Span::Run { .. })).count();
-        let kb_count = spans.iter().filter(|s| matches!(s, Span::Keybind(_))).count();
+        let spans = parse_spans(
+            "[Run]a[/Run] then [Show Keybind]super+/[/Show Keybind] then [Run]b|B[/Run]",
+        );
+        let run_count = spans
+            .iter()
+            .filter(|s| matches!(s, Span::Run { .. }))
+            .count();
+        let kb_count = spans
+            .iter()
+            .filter(|s| matches!(s, Span::Keybind(_)))
+            .count();
         assert_eq!(run_count, 2);
         assert_eq!(kb_count, 1);
     }
@@ -260,12 +281,19 @@ mod tests {
     #[test]
     fn unterminated_tag_falls_back_to_text() {
         let spans = parse_spans("oops [Run]no closing tag");
-        assert_eq!(spans, vec![Span::Text("oops ".into()), Span::Text("[Run]no closing tag".into())]);
+        assert_eq!(
+            spans,
+            vec![
+                Span::Text("oops ".into()),
+                Span::Text("[Run]no closing tag".into())
+            ]
+        );
     }
 
     #[test]
     fn parses_terminal_tag_into_argv_without_a_shell() {
-        let spans = parse_spans("Click [Terminal]breadbug --app clip|Report a problem[/Terminal] now.");
+        let spans =
+            parse_spans("Click [Terminal]breadbug --app clip|Report a problem[/Terminal] now.");
         assert_eq!(spans.len(), 3);
         assert_eq!(
             spans[1],
@@ -281,13 +309,22 @@ mod tests {
         let spans = parse_spans("[Terminal]breadbug[/Terminal]");
         assert_eq!(
             spans,
-            vec![Span::Terminal { argv: vec!["breadbug".into()], label: "breadbug".into() }]
+            vec![Span::Terminal {
+                argv: vec!["breadbug".into()],
+                label: "breadbug".into()
+            }]
         );
     }
 
     #[test]
     fn unterminated_terminal_tag_falls_back_to_text() {
         let spans = parse_spans("oops [Terminal]no closing tag");
-        assert_eq!(spans, vec![Span::Text("oops ".into()), Span::Text("[Terminal]no closing tag".into())]);
+        assert_eq!(
+            spans,
+            vec![
+                Span::Text("oops ".into()),
+                Span::Text("[Terminal]no closing tag".into())
+            ]
+        );
     }
 }
