@@ -68,7 +68,10 @@ fn scan_symptoms_dir(dir: &Path, out: &mut std::collections::BTreeMap<String, Sy
         match toml::from_str::<SymptomTree>(&text) {
             Ok(mut tree) => {
                 if tree.title.is_empty() {
-                    tree.title = stem.to_string();
+                    // Content older than the title field: "no-sound" -> "No sound".
+                    let words = stem.replace('-', " ");
+                    let mut c = words.chars();
+                    tree.title = c.next().map(|f| f.to_uppercase().collect::<String>() + c.as_str()).unwrap_or_default();
                 }
                 out.insert(stem.to_string(), tree);
             }

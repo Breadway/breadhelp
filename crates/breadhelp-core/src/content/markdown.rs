@@ -29,23 +29,48 @@ pub enum Block {
     Bullet(Vec<Span>),
 }
 
+/// Guides hard-wrap their source, so a paragraph or bullet runs on until a
+/// blank line, a heading or the next bullet, and its lines join with a
+/// space (a tag split across a line break still parses).
 pub fn parse(src: &str) -> Vec<Block> {
+    enum Open {
+        Paragraph(String),
+        Bullet(String),
+    }
+    fn close(open: Option<Open>, blocks: &mut Vec<Block>) {
+        match open {
+            Some(Open::Paragraph(t)) => blocks.push(Block::Paragraph(parse_spans(&t))),
+            Some(Open::Bullet(t)) => blocks.push(Block::Bullet(parse_spans(&t))),
+            None => {}
+        }
+    }
+
     let mut blocks = Vec::new();
+    let mut open: Option<Open> = None;
     for raw_line in src.lines() {
         let line = raw_line.trim();
         if line.is_empty() {
-            continue;
-        }
-        if let Some(rest) = line.strip_prefix("## ") {
+            close(open.take(), &mut blocks);
+        } else if let Some(rest) = line.strip_prefix("## ") {
+            close(open.take(), &mut blocks);
             blocks.push(Block::Heading(2, rest.trim().to_string()));
         } else if let Some(rest) = line.strip_prefix("# ") {
+            close(open.take(), &mut blocks);
             blocks.push(Block::Heading(1, rest.trim().to_string()));
         } else if let Some(rest) = line.strip_prefix("- ") {
-            blocks.push(Block::Bullet(parse_spans(rest)));
+            close(open.take(), &mut blocks);
+            open = Some(Open::Bullet(rest.to_string()));
         } else {
-            blocks.push(Block::Paragraph(parse_spans(line)));
+            match &mut open {
+                Some(Open::Paragraph(t) | Open::Bullet(t)) => {
+                    t.push(' ');
+                    t.push_str(line);
+                }
+                None => open = Some(Open::Paragraph(line.to_string())),
+            }
         }
     }
+    close(open, &mut blocks);
     blocks
 }
 
@@ -168,6 +193,25 @@ pub fn inline(text: &str) -> Vec<Inline> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn wrapped_lines_join_into_one_block() {
+        let blocks = parse("One line\nand its wrap.\n\n- a bullet\n  that wraps\n- next\nSecond para");
+        assert_eq!(
+            blocks,
+            vec![
+                Block::Paragraph(vec![Span::Text("One line and its wrap.".into())]),
+                Block::Bullet(vec![Span::Text("a bullet that wraps".into())]),
+                Block::Bullet(vec![Span::Text("next Second para".into())]),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_tag_split_across_a_line_break_still_parses() {
+        let blocks = parse("Press [Show Keybind]super +\nspace[/Show Keybind] now.");
+        assert!(matches!(&blocks[0], Block::Paragraph(s) if s.contains(&Span::Keybind("super + space".into()))));
+    }
 
     #[test]
     fn inline_styles_bold_and_code() {

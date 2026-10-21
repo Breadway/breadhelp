@@ -38,6 +38,12 @@ pub fn main() {
     // A previous tour killed mid-step may have left a keybind rebound.
     tourctl::revert_pending_rebind();
 
+    // GTK3 takes the Wayland app-id from the program name, which would be
+    // the bare binary name. BOS's Hyprland window rule (float, size) and the
+    // .desktop file's StartupWMClass both match `com.breadway.breadhelp`, the
+    // app-id the GTK4 help window always had.
+    glib::set_prgname(Some("com.breadway.breadhelp"));
+
     let screenshot_req = screenshot::parse(&args);
     let mut builder = tauri::Builder::default();
     // Registered first, per the plugin's docs, so it owns the second-launch

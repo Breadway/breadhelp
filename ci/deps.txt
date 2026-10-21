@@ -1,0 +1,7 @@
+# Extra pacman packages for the shared CI image (see ci/build.sh).
+# The help window is Tauri (GTK3 + WebKitGTK); its frontend builds with npm.
+webkit2gtk-4.1
+libsoup3
+gtk3
+nodejs
+npm

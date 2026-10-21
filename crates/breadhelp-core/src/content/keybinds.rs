@@ -96,7 +96,7 @@ pub fn parse(text: &str) -> Vec<Keybind> {
                 combo,
                 mods,
                 key,
-                action: entry.label.unwrap_or_else(|| entry.action.clone()),
+                action: tidy_label(entry.label.as_deref(), entry.command.as_deref(), &entry.action),
                 kind: entry.action,
                 category: entry.category,
                 demo_cmd: entry.demo_cmd,
@@ -104,6 +104,53 @@ pub fn parse(text: &str) -> Vec<Keybind> {
             }
         })
         .collect()
+}
+
+/// Apps people know by name, for binds whose label is just the command.
+const KNOWN_APPS: &[(&str, &str)] = &[
+    ("breadbox", "Open the app launcher"),
+    ("breadpad", "Notes and reminders"),
+    ("breadman", "Notes and task manager"),
+    ("breadclip", "Clipboard history"),
+    ("breadsearch", "Search your files"),
+    ("breadhelp", "This help (keybinds)"),
+    ("bos-settings", "Open BOS Settings"),
+    ("breadpaper", "Pick a wallpaper"),
+    ("breadbug", "Report a problem"),
+    ("breadshot", "Take a screenshot"),
+    ("hyprshot", "Take a screenshot"),
+    ("nautilus", "Open files"),
+    ("kitty", "Open a terminal"),
+];
+
+/// The bind's label as a person would say it. bos-settings' keybind editor
+/// saves exec binds as `Run: <command>`; those, and binds with no label at
+/// all, get a name from the command ("Run: bash -c breadbox" becomes "Open
+/// the app launcher", "Run: steam" becomes "Open steam"). Hand-written
+/// labels are kept as they are.
+fn tidy_label(label: Option<&str>, command: Option<&str>, action: &str) -> String {
+    let raw = label.map(str::trim).filter(|l| !l.is_empty());
+    let from_command = match raw {
+        None => command,
+        Some(l) => l.strip_prefix("Run:").map(str::trim),
+    };
+    let Some(cmd) = from_command.filter(|c| !c.is_empty()) else {
+        return raw.unwrap_or(action).to_string();
+    };
+    let mut words: Vec<&str> = cmd.split_whitespace().collect();
+    // `bash -c breadbox`, `sh -c '...'`: the program is after the -c.
+    if matches!(words.first().map(|w| w.rsplit('/').next().unwrap_or(w)), Some("bash" | "sh")) && words.get(1) == Some(&"-c") {
+        words.drain(..2);
+    }
+    let Some(first) = words.first() else {
+        return raw.unwrap_or(action).to_string();
+    };
+    let prog = first.trim_matches(|c| c == '\'' || c == '"').rsplit('/').next().unwrap_or(first);
+    let prog = prog.strip_suffix("-single").unwrap_or(prog);
+    if let Some((_, name)) = KNOWN_APPS.iter().find(|(p, _)| *p == prog) {
+        return name.to_string();
+    }
+    format!("Open {prog}")
 }
 
 /// Lookup by combo for `[Show Keybind]` tags. Guides write what a person
@@ -378,6 +425,20 @@ mod tests {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].label, "Switch to workspace 1");
         assert_eq!(rows[0].caps, vec!["Super", "1"]);
+    }
+
+    #[test]
+    fn run_labels_become_readable_names() {
+        assert_eq!(tidy_label(Some("Run: bash -c breadbox"), Some("bash -c breadbox"), "exec"), "Open the app launcher");
+        assert_eq!(tidy_label(Some("Run: steam"), Some("steam"), "exec"), "Open steam");
+        assert_eq!(
+            tidy_label(Some("Run: /home/u/.local/bin/zen-browser-single"), None, "exec"),
+            "Open zen-browser"
+        );
+        assert_eq!(tidy_label(Some("Run: hyprshot -m output"), None, "exec"), "Take a screenshot");
+        assert_eq!(tidy_label(None, Some("breadclip"), "exec"), "Clipboard history");
+        assert_eq!(tidy_label(Some("Lock screen"), Some("loginctl lock-session"), "exec"), "Lock screen");
+        assert_eq!(tidy_label(None, None, "fullscreen"), "fullscreen");
     }
 
     #[test]

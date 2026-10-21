@@ -60,11 +60,10 @@ jobs:
           bash "${ECOSYSTEM_CI_DIR}/scripts/dev-deps.sh" --root .
           rm -rf "${ECOSYSTEM_CI_DIR}"
 
-      - name: clippy
-        run: cd "$BREAD_CI_JOB_DIR/src" && bash ci/build.sh cargo clippy --all-targets -- -D warnings
-
-      - name: test
-        run: cd "$BREAD_CI_JOB_DIR/src" && bash ci/build.sh cargo test
+      # Frontend check + tests, then clippy and tests for both Cargo
+      # workspaces (the help window and the tour overlay).
+      - name: lint and test
+        run: cd "$BREAD_CI_JOB_DIR/src" && bash ci/build.sh bash ci/test-all.sh
 
       # Runs last so no earlier step loses its tree. Removes only this job's
       # own checkout directory, and only under RUNNER_TEMP.

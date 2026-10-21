@@ -1,13 +1,17 @@
+# Its own workspace, separate from the repo root's: see the root Cargo.toml
+# for why the GTK4 tour and the GTK3 (Tauri) help window never share a build.
+[workspace]
+
 [package]
 name = "breadhelp-tour"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
+version = "0.3.0"
+edition = "2021"
+license = "MIT"
 
 [dependencies]
-breadhelp-core.workspace = true
+breadhelp-core = { path = "../breadhelp-core" }
 gtk4 = { version = "0.11", features = ["v4_12"] }
 gdk4 = "0.11"
 gtk4-layer-shell = "0.8"
 glib = "0.22"
-bread-theme = { workspace = true, features = ["gtk"] }
+bread-theme = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", tag = "v0.8.0", features = ["gtk"] }

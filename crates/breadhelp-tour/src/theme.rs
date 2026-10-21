@@ -77,6 +77,16 @@ label.keycap { \
 }\n\
 .tour-callout button { border-radius: 10px; padding: 8px 14px; }\n\
 .tour-callout button.flat { color: alpha(@on-surface, 0.62); }\n\
+/* Adwaita's own blue `suggested-action` beat the shared stylesheet's rule \
+   here (the HELP-17 walkthrough saw it as \"a default blue Next button\"), \
+   so the callout restates it with a more specific selector. */\n\
+.tour-callout button.suggested-action { \
+  background-color: @accent; \
+  background-image: none; \
+  color: @on-accent; \
+  font-weight: bold; \
+}\n\
+.tour-callout button.suggested-action:hover { background-color: alpha(@accent, 0.88); }\n\
 ";
 
 thread_local! {

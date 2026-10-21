@@ -7,9 +7,17 @@
 # - `breadhelp-tour` (crates/breadhelp-tour): the live guided tour overlay,
 #   native GTK4 + gtk4-layer-shell. Tauri's Linux backend is GTK3, and GTK3
 #   and GTK4 cannot share a process, so the overlay is its own binary.
+#
+# The tour is deliberately NOT a member here: it has its own workspace and
+# Cargo.lock. Cargo unifies features across one build, so with both binaries
+# in one workspace a plain `cargo build` turned on bread-theme's `gtk`
+# feature for the Tauri binary too, linking GTK4 into it, and it aborted at
+# start ("GTK 2/3 symbols detected"). Build it with
+# `cargo build --manifest-path crates/breadhelp-tour/Cargo.toml`.
 [workspace]
 resolver = "2"
-members = ["crates/breadhelp-core", "crates/breadhelp-tour", "app"]
+members = ["crates/breadhelp-core", "app"]
+exclude = ["crates/breadhelp-tour"]
 
 [workspace.package]
 version = "0.3.0"

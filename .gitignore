@@ -57,3 +57,4 @@ frontend/build/
 frontend/.svelte-kit/
 # Tauri generated schemas
 app/gen/
+/crates/breadhelp-tour/target/

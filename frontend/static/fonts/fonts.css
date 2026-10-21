@@ -1,0 +1,6 @@
+/* Bundled so the window looks the same whether or not the fonts are
+   installed system-wide. Both are SIL OFL; licenses sit beside them. */
+@font-face { font-family: 'Outfit'; font-weight: 400; font-display: swap; src: url(/fonts/outfit-400.ttf) format('truetype'); }
+@font-face { font-family: 'Outfit'; font-weight: 500; font-display: swap; src: url(/fonts/outfit-500.ttf) format('truetype'); }
+@font-face { font-family: 'Outfit'; font-weight: 600; font-display: swap; src: url(/fonts/outfit-600.ttf) format('truetype'); }
+@font-face { font-family: 'Varela Round'; font-weight: 400; font-display: swap; src: url(/fonts/varelaround-400.ttf) format('truetype'); }

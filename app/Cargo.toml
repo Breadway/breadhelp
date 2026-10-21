@@ -32,3 +32,5 @@ bread-utils.workspace = true
 bread-theme.workspace = true
 notify = "7"
 tokio = { version = "1", features = ["time"] }
+# Same glib Tauri's GTK3 backend uses; only for `set_prgname`, see lib.rs.
+glib = "0.18"

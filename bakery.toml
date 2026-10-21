@@ -1,7 +1,8 @@
 name = "breadhelp"
 description = "Onboarding and help center for Bread OS"
-binaries = ["breadhelp"]
-system_deps = ["gtk4", "glib2", "gtk4-layer-shell", "hicolor-icon-theme"]
+binaries = ["breadhelp", "breadhelp-tour"]
+# breadhelp is Tauri (GTK3 + WebKitGTK); breadhelp-tour is GTK4 + layer-shell.
+system_deps = ["webkit2gtk-4.1", "gtk3", "libsoup3", "gtk4", "glib2", "gtk4-layer-shell", "hicolor-icon-theme"]
 optional_system_deps = ["snapper"]
 bread_deps = []
 license_file = "LICENSE"

@@ -44,10 +44,10 @@ jobs:
           bash "${ECOSYSTEM_CI_DIR}/scripts/dev-deps.sh" --root .
 
       - name: build
-        run: cd src && bash ci/build.sh cargo build --release
+        run: cd src && bash ci/build.sh bash ci/build-all.sh
 
       - name: test
-        run: cd src && bash ci/build.sh cargo test --release
+        run: cd src && bash ci/build.sh bash ci/test-all.sh
 
       - name: compute dev version
         run: |
@@ -75,10 +75,12 @@ jobs:
           set -euo pipefail
           PKG_DIR="/srv/breadway-dl/dev/breadhelp/${VERSION}"
           mkdir -p "${PKG_DIR}"
-          cp "src/target/release/breadhelp" "${PKG_DIR}/breadhelp-x86_64"
-          strip "${PKG_DIR}/breadhelp-x86_64"
-          sha256sum "${PKG_DIR}/breadhelp-x86_64" | awk '{print $1}' \
-            > "${PKG_DIR}/breadhelp-x86_64.sha256"
+          for bin in breadhelp breadhelp-tour; do
+            cp "src/target/release/${bin}" "${PKG_DIR}/${bin}-x86_64"
+            strip "${PKG_DIR}/${bin}-x86_64"
+            sha256sum "${PKG_DIR}/${bin}-x86_64" | awk '{print $1}' \
+              > "${PKG_DIR}/${bin}-x86_64.sha256"
+          done
           cp src/packaging/breadhelp.desktop "${PKG_DIR}/"
           cp src/LICENSE "${PKG_DIR}/"
           tar czf "${PKG_DIR}/content.tar.gz" -C src content

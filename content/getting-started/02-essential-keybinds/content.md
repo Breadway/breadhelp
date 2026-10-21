@@ -27,5 +27,6 @@ nothing here is mandatory either, click around if you'd rather.
 
 ## The full list
 
-The Home tab's keybind viewer always has the complete, current list; this
-guide only covers the ones you'll use every day.
+The Keybinds page ([Show Keybind]super + /[/Show Keybind]) always has the
+complete, current list, read straight from your config; this guide only
+covers the ones you'll use every day.

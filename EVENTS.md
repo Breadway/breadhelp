@@ -1,6 +1,6 @@
 # breadhelp: bread event integration
 
-breadhelp is a standalone GTK help center: it works exactly the same with
+breadhelp is a standalone help center: it works exactly the same with
 or without `breadd` running. When breadd *is* present, it publishes one
 event after the main window is actually shown. See the parent `bread`
 repo's `Documentation.md`, specifically its "Namespaces" and
@@ -17,18 +17,20 @@ its own short-lived connection. Command verbs are only received while
 
 | Event | Data | When |
 |-------|------|------|
-| `bread.help.opened` | `{ "autostart": bool }` | The main help window is presented (`ApplicationWindow::present`). `autostart` is `true` when that invocation was launched with `--autostart`. |
+| `bread.help.opened` | `{ "autostart": bool }` | The help window is shown. `autostart` is `true` when that invocation was launched with `--autostart` (first-run setup). |
 | `bread.help.open.done` | `{}` | `bread.command.help.open` was received and `breadhelp` was spawned. This is the command confirmation, not proof the window mapped: the spawned process is the same no-args invocation as SUPER+/. |
 | `bread.help.open.failed` | `{ "error": "<message>" }` | `bread.command.help.open` was received but this binary could not be started. |
 
 Not emitted when:
 
-- every-login `--autostart` builds a hidden window because onboarding is
-  already done (silent autostart)
-- first-run `--autostart` presents the main window on the day-zero
-  wizard; the tour overlay starts after that wizard finishes (or is
-  skipped). `bread.help.opened` **is** emitted for that first-run present.
-- `--onboard` / `--tour-event` (tour only)
+- every-login `--autostart` keeps the window hidden because setup and
+  the tour are already done (silent autostart)
+- first-run `--autostart` shows the window on first-run setup; the tour
+  overlay (`breadhelp-tour`) starts after setup finishes (or is skipped).
+  `bread.help.opened` **is** emitted for that first-run show.
+- `--onboard` / `--tour-event` (tour only: handled before any window
+  exists, and a `--tour-event` with no tour running is a no-op)
+- `--suggest` (updates the Home banner without showing the window)
 - `--screenshot` (capture, not a user-visible open)
 
 ## Commands honored (`bread.command.help.*`)
@@ -39,7 +41,7 @@ bread convention, not a breadhelp bug.
 
 | Verb | Data | Effect |
 |------|------|--------|
-| `open` | none | Same as running `breadhelp` with no flags: present the main help window (GApplication forwards to an already-running primary instance). Emits `bread.help.open.done` / `.failed`. |
+| `open` | none | Same as launching BOS Help from the app menu (`breadhelp --page home`): show the help window on Home, handed to an already-running instance if there is one. Emits `bread.help.open.done` / `.failed`. |
 
 ```lua
 bread.spawn(function()

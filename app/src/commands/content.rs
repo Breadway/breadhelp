@@ -304,13 +304,20 @@ pub fn list_symptoms() -> Vec<TreeView> {
 pub struct Prefs {
     mode: &'static str,
     has_settings: bool,
+    /// First-run setup not finished yet: the sidebar offers "Finish setup".
+    setup_needed: bool,
+    setup_steps_left: usize,
 }
 
 #[tauri::command]
 pub fn get_prefs() -> Prefs {
+    let state = State::load();
+    let step = (state.day_zero_step().max(0) as usize).min(breadhelp_core::setup::STEP_COUNT);
     Prefs {
-        mode: State::load().mode().as_str(),
+        mode: state.mode().as_str(),
         has_settings: breadhelp_core::services::exec::command_exists("bos-settings"),
+        setup_needed: breadhelp_core::setup::needs_setup(),
+        setup_steps_left: breadhelp_core::setup::STEP_COUNT - step,
     }
 }
 

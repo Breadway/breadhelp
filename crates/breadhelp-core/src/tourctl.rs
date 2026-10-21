@@ -82,10 +82,13 @@ pub fn spawn_tour(args: &[&str]) {
 /// leave a stray chained bind behind.
 pub fn revert_pending_rebind() {
     let mut cfg = State::load();
-    if let Some((_key, original)) = cfg.pending_rebind() {
-        if let Err(e) = hyprland::rebind_temp(&original) {
-            eprintln!("breadhelp: couldn't revert the tour's temporary rebind: {e}");
-        }
+    // Nothing pending is the common case: don't rewrite state.toml (and its
+    // .bak) on every launch for no change.
+    let Some((_key, original)) = cfg.pending_rebind() else {
+        return;
+    };
+    if let Err(e) = hyprland::rebind_temp(&original) {
+        eprintln!("breadhelp: couldn't revert the tour's temporary rebind: {e}");
     }
     cfg.clear_pending_rebind();
 }

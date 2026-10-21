@@ -18,6 +18,18 @@ const VIEW_SETTLE_DELAY: Duration = Duration::from_millis(1500);
 
 const KNOWN_VIEWS: &[&str] = &["home", "keybinds", "guides", "fix", "search", "setup"];
 
+/// The GTK window's view names, which bread-capture still requests: the
+/// Learn tab is Guides now, Ask is the search palette, and the
+/// troubleshooter dialog is part of Fix a problem.
+fn canonical_view(view: &str) -> &str {
+    match view {
+        "learn" => "guides",
+        "ask" => "search",
+        "troubleshoot-wizard" => "fix",
+        other => other,
+    }
+}
+
 pub struct ScreenshotRequest {
     view: String,
     output: PathBuf,
@@ -54,7 +66,7 @@ pub fn parse(args: &[String]) -> Option<ScreenshotRequest> {
         eprintln!("breadhelp: {e}");
         std::process::exit(1);
     }
-    let view = view?;
+    let view = canonical_view(&view?).to_string();
     if !KNOWN_VIEWS.contains(&view.as_str()) {
         eprintln!("breadhelp: unknown screenshot view '{view}' (known: {})", KNOWN_VIEWS.join(", "));
         std::process::exit(1);
@@ -98,5 +110,18 @@ fn finish(result: anyhow::Result<()>) {
             eprintln!("breadhelp: screenshot capture failed: {e}");
             std::process::exit(1);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn old_gtk_view_names_still_resolve() {
+        for old in ["learn", "ask", "troubleshoot-wizard"] {
+            assert!(KNOWN_VIEWS.contains(&canonical_view(old)), "{old}");
+        }
+        assert_eq!(canonical_view("keybinds"), "keybinds");
     }
 }
