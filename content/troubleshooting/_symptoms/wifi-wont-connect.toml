@@ -1,3 +1,6 @@
+title = "Wi-Fi"
+summary = "Won't connect, keeps dropping"
+
 [[node]]
 id = "start"
 prompt = "What's happening with Wi-Fi?"

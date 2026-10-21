@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=BOS Help
 Comment=Your personal guide to the Bread desktop
-Exec=breadhelp
+Exec=breadhelp --page home
 Icon=help-browser
 Terminal=false
 Type=Application
