@@ -4,6 +4,7 @@
 	import { getCurrentWindow } from "@tauri-apps/api/window";
 	import Sidebar from "$lib/components/Sidebar.svelte";
 	import SearchPalette from "$lib/components/SearchPalette.svelte";
+	import SuggestionBanner from "$lib/components/SuggestionBanner.svelte";
 	import Home from "$lib/views/Home.svelte";
 	import Keybinds from "$lib/views/Keybinds.svelte";
 	import Guides from "$lib/views/Guides.svelte";
@@ -94,6 +95,7 @@
 	<div class="shell">
 		<Sidebar />
 		<main class="content" bind:this={content}>
+			<SuggestionBanner />
 			{#if View}<View />{/if}
 		</main>
 	</div>
