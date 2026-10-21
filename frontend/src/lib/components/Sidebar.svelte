@@ -31,6 +31,16 @@
 		nav.mode = mode;
 		api.setMode(mode);
 	}
+
+	// Opt-in: keep the window loaded after closing it, for a faster Super + /.
+	let resident = $state(false);
+	$effect(() => {
+		api.resident().then((r) => (resident = r));
+	});
+	function toggleResident(e: Event) {
+		resident = (e.currentTarget as HTMLInputElement).checked;
+		api.setResident(resident);
+	}
 </script>
 
 <nav class="sidebar" aria-label="Help sections">
@@ -53,6 +63,10 @@
 			</button>
 		{/if}
 	</div>
+	<label class="keep" title="Opens in about a fifth of a second instead of about two thirds, but keeps roughly 200 MB of memory in use while closed.">
+		<input type="checkbox" checked={resident} onchange={toggleResident} />
+		<span>Keep ready in the background<small>Faster to open, uses about 200 MB</small></span>
+	</label>
 	<div class="foot">
 		<Type size={17} aria-hidden="true" />
 		<label for="mode">Display</label>
@@ -77,12 +91,16 @@
 	.item :global(svg) { flex: none; }
 	.label { flex: 1; }
 	.badge { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: var(--accent); color: var(--on-accent); }
+	.keep { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 12.5px; cursor: pointer; }
+	.keep input { margin: 2px 0 0; accent-color: var(--accent); width: 15px; height: 15px; flex: none; }
+	.keep small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
 	.foot { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
 	.foot select { margin-left: auto; background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
 	@media (max-width: 760px) {
 		.sidebar { width: 64px; }
 		.item { justify-content: center; }
-		.label, .hint, .badge, .section-header, .search span, .search kbd, .foot label { display: none; }
+		.label, .hint, .badge, .section-header, .search span, .search kbd, .foot label, .keep span { display: none; }
+		.keep { justify-content: center; }
 		.search { justify-content: center; margin: 12px 8px 8px; }
 		/* The display picker stays usable as an invisible select over its icon. */
 		.foot { justify-content: center; position: relative; }

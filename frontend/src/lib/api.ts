@@ -61,6 +61,8 @@ export const api = {
 	openState: () => invoke<Open>("get_open_state"),
 	dismissSuggestion: () => invoke<void>("dismiss_suggestion"),
 	hideWindow: () => invoke<void>("hide_window"),
+	resident: () => invoke<boolean>("get_resident"),
+	setResident: (resident: boolean) => invoke<void>("set_resident", { resident }),
 	prefs: () => invoke<Prefs>("get_prefs"),
 	setMode: (mode: Mode) => invoke<void>("set_mode", { mode }),
 

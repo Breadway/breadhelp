@@ -4,7 +4,7 @@ Onboarding and help center for [BOS (Bread Operating System)](https://git.breadw
 
 Two binaries:
 
-- `breadhelp`: the help window. Tauri (Rust in `app/`, Svelte in `frontend/`), the same stack and look as bos-settings. It stays resident and hidden for the session so Super + / opens instantly.
+- `breadhelp`: the help window. Tauri (Rust in `app/`, Svelte in `frontend/`), the same stack and look as bos-settings. Closing it quits. "Keep ready in the background" (sidebar, off by default) keeps it loaded and hidden instead: Super + / then paints in about 170 ms instead of about 620 ms, for about 200 MB of memory while closed. A hidden resident window reports itself to memory managers and can be unloaded (see EVENTS.md).
 - `breadhelp-tour`: the tour overlay. Native GTK4 + gtk4-layer-shell, in `crates/breadhelp-tour`. Started by the help window; exits when the tour ends.
 
 Both share `crates/breadhelp-core` (content, keybinds, state, setup, fixes).

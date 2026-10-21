@@ -71,7 +71,7 @@ fn main() {
     // exit; `rebind_temp` is a short-lived `hyprctl` call.
     app.connect_shutdown(|_| {
         tour::self_heal();
-        breadhelp_core::tourctl::remove_pid();
+        breadhelp_core::tourctl::tour_pid().remove();
     });
 
     app.run();

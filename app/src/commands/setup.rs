@@ -2,7 +2,7 @@
 //! `breadhelp_core::setup`). Finishing or skipping it hands off to the tour.
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 use breadhelp_core::config::State;
 use breadhelp_core::services::exec;
@@ -94,16 +94,15 @@ pub async fn create_snapshot() -> Outcome {
     Outcome { message: setup::snapshot_message(ok).into(), ok }
 }
 
-/// Finish (or skip) setup: mark it done, hide the window and start the tour
+/// Finish (or skip) setup: mark it done, start the tour, and get the window
+/// out of the way
 /// unless the user already finished it once.
 #[tauri::command]
 pub fn finish_setup(app: AppHandle) {
     let mut state = State::load();
     state.set_day_zero_completed(true);
-    if let Some(w) = app.get_webview_window("main") {
-        let _ = w.hide();
-    }
     if !state.onboarding_completed() {
         tourctl::spawn_tour(&["--start"]);
     }
+    super::window::dismiss(&app);
 }

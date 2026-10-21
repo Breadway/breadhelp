@@ -8,9 +8,11 @@ pub struct Args {
     /// `setup`). A bare launch (Super + /) opens Keybinds.
     pub page: Option<String>,
     /// Set by the every-login autostart entry. Shows first-run setup when it
-    /// is still needed, otherwise stays hidden so a later Super + / is
-    /// instant.
+    /// is still needed; otherwise starts hidden only when the resident
+    /// setting is on, and exits when it isn't.
     pub autostart: bool,
+    /// `--unload`: a hidden resident window quits (see `commands::window`).
+    pub unload: bool,
     /// `--suggest <id>`: a breadd module noticed something (see
     /// `services::breadd::resolve`). Shows a banner without stealing focus.
     pub suggest: Option<String>,
@@ -49,6 +51,7 @@ pub fn parse(args: &[String]) -> Args {
         match arg.as_str() {
             "--page" => out.page = it.next().cloned(),
             "--autostart" => out.autostart = true,
+            "--unload" => out.unload = true,
             "--suggest" => out.suggest = it.next().cloned(),
             _ => {}
         }
@@ -76,6 +79,7 @@ mod tests {
         assert!(a.autostart);
         assert_eq!(a.page.as_deref(), Some("fix"));
         assert_eq!(a.suggest.as_deref(), Some("monitor-setup"));
+        assert!(parse(&v(&["breadhelp", "--unload"])).unload);
     }
 
     #[test]

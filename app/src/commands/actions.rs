@@ -8,7 +8,7 @@ use breadhelp_core::content::markdown::{self, Block, Span};
 use breadhelp_core::content::troubleshoot;
 use breadhelp_core::services::{exec, hyprland};
 use breadhelp_core::{fixes, tourctl};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 /// One-click fix from the Home / Fix a problem lists. Waits for the fix to
 /// finish and reports whether it succeeded.
@@ -116,14 +116,12 @@ pub fn report_problem() {
     exec::run_terminal(&["breadbug".to_string()]);
 }
 
-/// "Take the tour": hide this window so the overlay has the screen, then
-/// restart the tour from the first step.
+/// "Take the tour": restart the tour from the first step, and get this
+/// window out of the way (hidden or closed, per the resident setting).
 #[tauri::command]
 pub fn start_tour(app: AppHandle) {
-    if let Some(w) = app.get_webview_window("main") {
-        let _ = w.hide();
-    }
     tourctl::spawn_tour(&["--onboard"]);
+    super::window::dismiss(&app);
 }
 
 #[cfg(test)]

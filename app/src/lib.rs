@@ -1,9 +1,9 @@
 //! `breadhelp`: the BOS help window.
 //!
-//! A Tauri app (Rust here, Svelte in `frontend/`) that stays resident and
-//! hidden for the session so Super + / opens instantly. The guided tour is a
-//! separate GTK4 binary, `breadhelp-tour`; `breadhelp_core::tourctl` is how
-//! the two meet.
+//! A Tauri app (Rust here, Svelte in `frontend/`). Closing it quits, unless
+//! the opt-in resident setting keeps it loaded and hidden for a faster
+//! Super + / (see `commands::window`). The guided tour is a separate GTK4
+//! binary, `breadhelp-tour`; `breadhelp_core::tourctl` is how the two meet.
 
 mod cli;
 mod commands;
@@ -35,6 +35,29 @@ pub fn main() {
         None => {}
     }
 
+    // Background-only calls decide here whether a window process is needed
+    // at all. A running one gets the call through the single-instance
+    // hand-off below; with none running, nothing should start just to hold
+    // a banner, unload nothing, or idle after a login.
+    let args_parsed = cli::parse(&args);
+    if !window::window_pid().alive() {
+        if args_parsed.unload {
+            return;
+        }
+        if let Some(id) = &args_parsed.suggest {
+            window::save_pending_suggestion(id);
+            return;
+        }
+        if args_parsed.autostart && !setup::needs_setup() {
+            if !State::load().onboarding_completed() {
+                tourctl::spawn_tour(&["--start"]);
+            }
+            if !State::load().resident() {
+                return;
+            }
+        }
+    }
+
     // A previous tour killed mid-step may have left a keybind rebound.
     tourctl::revert_pending_rebind();
 
@@ -59,10 +82,14 @@ pub fn main() {
         .setup(move |app| {
             let app = app.handle().clone();
             commands::theme::watch_and_emit(&app);
-            window::hide_on_close(&app);
+            window::route_close(&app);
             match screenshot_req {
                 Some(req) => screenshot::dispatch(req, app),
-                None => handle(&app, &cli::parse(&args)),
+                None => {
+                    window::presence_started();
+                    window::take_pending_suggestion(&app);
+                    handle(&app, &args_parsed);
+                }
             }
             Ok(())
         })
@@ -71,6 +98,8 @@ pub fn main() {
             commands::window::get_open_state,
             commands::window::dismiss_suggestion,
             commands::window::hide_window,
+            commands::window::get_resident,
+            commands::window::set_resident,
             commands::content::list_guides,
             commands::content::get_guide,
             commands::content::get_keybinds,
@@ -102,6 +131,10 @@ pub fn main() {
 
 /// One launch's worth of argv, first launch or forwarded.
 fn handle(app: &AppHandle, args: &cli::Args) {
+    if args.unload {
+        window::unload(app);
+        return;
+    }
     if let Some(id) = &args.suggest {
         if let Some(s) = breadd::resolve(id) {
             window::suggest(app, s.text);
@@ -110,12 +143,11 @@ fn handle(app: &AppHandle, args: &cli::Args) {
         return;
     }
     if args.autostart {
-        // Autostart is only ever visible on a genuine first run: setup, then
-        // the tour. Every later login just keeps the window warm.
+        // Autostart is only ever visible on a genuine first run (setup, then
+        // the tour). Reaching here otherwise means the resident setting is
+        // on: stay loaded and hidden. `main` already started the tour.
         if setup::needs_setup() {
             window::show(app, "setup", true);
-        } else if !State::load().onboarding_completed() {
-            tourctl::spawn_tour(&["--start"]);
         }
         return;
     }

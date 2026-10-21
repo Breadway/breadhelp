@@ -191,6 +191,22 @@ impl State {
         self.save();
     }
 
+    /// Keep the help window loaded (hidden) after it is closed, so the next
+    /// Super + / paints in about 170 ms instead of about 620 ms, at the cost
+    /// of about 200 MiB of webview memory for the session. Off by default.
+    pub fn resident(&self) -> bool {
+        self.doc
+            .get("general")
+            .and_then(|t| t.get("resident"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
+
+    pub fn set_resident(&mut self, resident: bool) {
+        self.doc["general"]["resident"] = value(resident);
+        self.save();
+    }
+
     fn save(&self) {
         save_doc(&self.path, &self.doc);
     }
@@ -287,6 +303,8 @@ mod tests {
         assert_eq!(state.day_zero_step(), 0);
         assert!(!state.day_zero_snapshot_attempted());
 
+        assert!(!state.resident(), "resident is opt-in");
+        state.set_resident(true);
         state.set_day_zero_step(3);
         state.set_day_zero_snapshot_attempted(true);
         state.set_day_zero_completed(true);
@@ -298,6 +316,7 @@ mod tests {
         assert!(loaded.day_zero_completed());
         assert_eq!(loaded.day_zero_step(), 3);
         assert!(loaded.day_zero_snapshot_attempted());
+        assert!(loaded.resident());
 
         let _ = std::fs::remove_dir_all(&dir);
     }

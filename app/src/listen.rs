@@ -29,7 +29,7 @@ pub fn run() {
     }
 }
 
-/// Reacts to `bread.command.help.*` verbs. Only `open` is honored today;
+/// Reacts to `bread.command.help.*` verbs: `open` and `unload`;
 /// other verbs are ignored, not stubbed as no-ops that pretend to succeed.
 fn handle_command(event: &BreadEvent) {
     let Some(verb) = command_verb(&event.event) else {
@@ -37,6 +37,7 @@ fn handle_command(event: &BreadEvent) {
     };
     match verb {
         "open" => handle_open(),
+        "unload" => handle_unload(),
         other => {
             eprintln!("breadhelp: ignoring unrecognized bread.command.help.{other}");
         }
@@ -57,6 +58,19 @@ fn handle_open() {
                 serde_json::json!({ "error": e.to_string() }),
             );
         }
+    }
+}
+
+/// Free a hidden resident window's memory (breadram's lever). A no-op when
+/// no window is up or it is on screen; see `commands::window::unload`.
+fn handle_unload() {
+    let exe = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("breadhelp"));
+    let mut cmd = std::process::Command::new(exe);
+    cmd.arg("--unload");
+    let client = BreadClient::connect(APP_ID);
+    match breadhelp_core::services::exec::spawn_detached(cmd) {
+        Ok(()) => client.emit("bread.help.unload.done", serde_json::json!({})),
+        Err(e) => client.emit("bread.help.unload.failed", serde_json::json!({ "error": e.to_string() })),
     }
 }
 

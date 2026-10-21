@@ -18,6 +18,9 @@ its own short-lived connection. Command verbs are only received while
 | Event | Data | When |
 |-------|------|------|
 | `bread.help.opened` | `{ "autostart": bool }` | The help window is shown. `autostart` is `true` when that invocation was launched with `--autostart` (first-run setup). |
+| `bread.help.hidden` | `{ "resident": bool }` | The help window left the screen. `resident: true`: it is hidden and the process stays loaded (the opt-in resident setting), so `bread.command.help.unload` would free it. `resident: false`: the process is quitting. |
+| `bread.help.unload.done` | `{}` | `bread.command.help.unload` was received and `breadhelp --unload` was spawned. |
+| `bread.help.unload.failed` | `{ "error": "<message>" }` | `bread.command.help.unload` was received but `breadhelp --unload` could not be started. |
 | `bread.help.open.done` | `{}` | `bread.command.help.open` was received and `breadhelp` was spawned. This is the command confirmation, not proof the window mapped: the spawned process is the same no-args invocation as SUPER+/. |
 | `bread.help.open.failed` | `{ "error": "<message>" }` | `bread.command.help.open` was received but this binary could not be started. |
 
@@ -41,6 +44,7 @@ bread convention, not a breadhelp bug.
 
 | Verb | Data | Effect |
 |------|------|--------|
+| `unload` | none | Runs `breadhelp --unload`: a hidden resident help window quits to free its memory. Does nothing when no window is up, or when it is on screen. Emits `bread.help.unload.done` / `.failed`. |
 | `open` | none | Same as launching BOS Help from the app menu (`breadhelp --page home`): show the help window on Home, handed to an already-running instance if there is one. Emits `bread.help.open.done` / `.failed`. |
 
 ```lua
@@ -56,6 +60,21 @@ There is no `onboard` / `tour` / `suggest` command verb. Those already
 exist as local CLI flags (`--onboard`, `--tour-event`, `--suggest`).
 If/when a bus verb maps to real extra behavior, add it then; do not
 stub one as a no-op ahead of it.
+
+## Presence file (no breadd needed)
+
+While the help window process is up it keeps
+`$XDG_RUNTIME_DIR/breadhelp-window.json` current and removes it on exit:
+
+```json
+{ "pid": 1234, "visible": false, "resident": true, "since": 1792574783 }
+```
+
+`visible` is whether it is on screen, `resident` whether closing it hides
+instead of quitting, and `since` the unix time of the last show or hide. A
+memory manager (breadram) can read it, or subscribe to `bread.help.opened`
+/ `bread.help.hidden`, and send `bread.command.help.unload` (or run
+`breadhelp --unload`) once it has been hidden long enough.
 
 ## Fail-safe behavior
 

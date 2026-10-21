@@ -85,7 +85,7 @@ pub fn start(app: &gtk4::Application) {
         return;
     }
     let start_index = (State::load().onboarding_step() as usize).min(steps.len() - 1);
-    tourctl::write_pid();
+    tourctl::tour_pid().write();
     STATE.with(|cell| {
         *cell.borrow_mut() = Some(TourState {
             _hold: app.hold(),
@@ -189,7 +189,7 @@ fn finish() {
     teardown_visuals();
     let mut state = State::load();
     state.set_onboarding_completed(true);
-    tourctl::remove_pid();
+    tourctl::tour_pid().remove();
     // Drops the application hold too, so the process exits.
     STATE.with(|cell| *cell.borrow_mut() = None);
 }

@@ -19,6 +19,14 @@ pub fn emit_opened(autostart: bool) {
     );
 }
 
+/// Fire-and-forget `bread.help.hidden` when the help window leaves the
+/// screen. `resident` is true when the process stays loaded (hidden) and
+/// false when it is quitting, so a memory manager knows whether there is
+/// anything left to unload.
+pub fn emit_hidden(resident: bool) {
+    BreadClient::connect(APP_ID).emit("bread.help.hidden", serde_json::json!({ "resident": resident }));
+}
+
 pub struct Suggestion {
     pub text: String,
 }
