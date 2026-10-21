@@ -29,8 +29,13 @@
 
 	function pick(id: string) {
 		nav.symptom = id;
-		reset();
 	}
+	// Any change of troubleshooter (a card here, or a result picked in
+	// search while already on this page) starts its tree from the top.
+	$effect(() => {
+		void picked;
+		reset();
+	});
 	function reset() {
 		node = "start";
 		result = null;

@@ -71,8 +71,9 @@ While the help window process is up it keeps
 ```
 
 `visible` is whether it is on screen, `resident` whether closing it hides
-instead of quitting, and `since` the unix time of the last show or hide. A
-memory manager (breadram) can read it, or subscribe to `bread.help.opened`
+instead of quitting, and `since` the unix time of the last show or hide.
+The file can outlive a crashed process, so check that `pid` is alive (and
+is `breadhelp`) before trusting it. A memory manager (breadram) can read it, or subscribe to `bread.help.opened`
 / `bread.help.hidden`, and send `bread.command.help.unload` (or run
 `breadhelp --unload`) once it has been hidden long enough.
 

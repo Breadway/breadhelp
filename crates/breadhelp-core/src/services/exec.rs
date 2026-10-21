@@ -1,9 +1,10 @@
 use std::path::Path;
 use std::process::Command;
 
-/// Spawn without waiting, but reap the child on a throwaway thread: the help
-/// window stays resident for the whole session, so an un-waited child would
-/// sit as a zombie until logout.
+/// Spawn without waiting, but reap the child on a throwaway thread: both
+/// binaries can outlive what they launch (the help window may be resident for
+/// the session, a tour runs for minutes), and an un-waited child would sit as
+/// a zombie until the parent exits.
 pub fn spawn_detached(mut cmd: Command) -> std::io::Result<()> {
     let mut child = cmd.spawn()?;
     std::thread::spawn(move || {

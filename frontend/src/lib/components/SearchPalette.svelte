@@ -56,7 +56,9 @@
 
 	function onKey(e: KeyboardEvent) {
 		if (e.key === "Escape") {
+			// Esc here closes search only, never the window behind it.
 			e.preventDefault();
+			e.stopPropagation();
 			nav.searchOpen = false;
 		} else if (e.key === "ArrowDown") {
 			e.preventDefault();
@@ -76,7 +78,7 @@
 		<div class="bar">
 			<Search size={18} />
 			<label for="q" class="sr-only">Search help</label>
-			<input id="q" bind:this={input} bind:value={query} type="search" autocomplete="off" spellcheck="false" placeholder="Search guides, keybinds, commands and fixes" aria-controls="results" />
+			<input id="q" bind:this={input} bind:value={query} type="search" autocomplete="off" spellcheck="false" placeholder="Search guides, keybinds, commands and fixes" role="combobox" aria-expanded="true" aria-controls="results" aria-activedescendant={current ? `res-${items.indexOf(current)}` : undefined} />
 			<kbd class="kc">Esc</kbd>
 		</div>
 		<div class="body">
@@ -85,7 +87,7 @@
 					<div class="group-label">{group.title}</div>
 					{#each group.items as entry (entry.kind + entry.id)}
 						{@const index = items.indexOf(entry)}
-						<button class="res" class:on={index === selected} role="option" aria-selected={index === selected} onmouseenter={() => (selected = index)} onclick={() => activate(entry)}>
+						<button class="res" id={`res-${index}`} class:on={index === selected} role="option" aria-selected={index === selected} onmouseenter={() => (selected = index)} onclick={() => activate(entry)}>
 							<span class="dot {entry.kind}" aria-hidden="true"></span>
 							<span class="t">{entry.title}</span>
 							<small>{entry.hint}</small>

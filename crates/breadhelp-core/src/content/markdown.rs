@@ -7,7 +7,7 @@
 //! as plain text nodes and buttons: guide text never reaches the webview as
 //! markup. The tour overlay renders the same tree with GTK widgets.
 //!
-//! Supported: `#`/`##` headings, one-block-per-line paragraphs, `- ` bullets,
+//! Supported: `#`/`##` headings, paragraphs (wrapped lines join), `- ` bullets,
 //! inline `**bold**`/`` `code` `` (see [`inline`]), and three custom tags:
 //! `[Run]<command>[/Run]` (optional `|Label` suffix, run through a shell),
 //! `[Terminal]<command>[/Terminal]` (optional `|Label` suffix, split on

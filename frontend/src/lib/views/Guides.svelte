@@ -33,11 +33,16 @@
 		simple = prefersSimple(nav.mode);
 	});
 
+	// Only the latest request may land: clicking through guides quickly
+	// must not leave an older, slower response on screen.
+	let latest = 0;
 	$effect(() => {
 		const g = current;
 		const s = simple;
 		if (!g) return;
+		const req = ++latest;
 		api.guide(g.category, g.id, s).then((v) => {
+			if (req !== latest) return;
 			guide = v;
 			if (article) article.scrollTop = 0;
 		});

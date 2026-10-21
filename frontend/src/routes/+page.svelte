@@ -52,8 +52,15 @@
 			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
 				e.preventDefault();
 				nav.searchOpen = !nav.searchOpen;
-			} else if (e.key === "Escape" && !nav.searchOpen && nav.page !== "setup") {
-				// A cheatsheet you dismiss as fast as you summoned it.
+			} else if (e.key === "Escape" && !e.defaultPrevented && !nav.searchOpen && nav.page !== "setup") {
+				// Esc in a text field (keybind filter, rebind box) leaves the
+				// field; anywhere else it dismisses the window, a cheatsheet you
+				// close as fast as you summoned it.
+				const t = e.target as HTMLElement | null;
+				if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) {
+					t.blur();
+					return;
+				}
 				api.hideWindow();
 			}
 		};

@@ -114,6 +114,12 @@ pub fn get_guide(category: String, id: String, simplified: bool) -> Option<Guide
                             .map(|r| Run { text: r.text, bold: r.bold, code: r.code })
                             .collect(),
                     },
+                    // An empty [Terminal] has nothing to run: plain text, as
+                    // the tour shows it, and not counted as a button (see
+                    // `actions::guide_buttons`).
+                    Span::Terminal { argv, label } if argv.is_empty() => SpanView::Text {
+                        runs: vec![Run { text: label, bold: false, code: false }],
+                    },
                     Span::Run { label, .. } | Span::Terminal { label, .. } => {
                         action += 1;
                         SpanView::Action { label, action: action - 1 }

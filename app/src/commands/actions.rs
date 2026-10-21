@@ -43,7 +43,13 @@ pub fn run_guide_action(category: String, id: String, simplified: bool, action: 
             Block::Heading(..) => None,
         })
         .flatten()
-        .filter(|s| matches!(s, Span::Run { .. } | Span::Terminal { .. }))
+        // Same numbering as `content::get_guide`: an empty [Terminal] is
+        // text there, not a button.
+        .filter(|s| match s {
+            Span::Run { .. } => true,
+            Span::Terminal { argv, .. } => !argv.is_empty(),
+            _ => false,
+        })
         .nth(action)
         .ok_or("no such button")?;
     match span {
@@ -80,10 +86,12 @@ pub fn rebind_keybind(combo_id: String, new_combo: String) -> Result<(), String>
     let binds = keybinds::load();
     let bind = binds.iter().find(|b| b.combo_id == combo_id).ok_or("unknown keybind")?;
     let raw = bind.raw.as_ref().ok_or("only app-launching keybinds can be changed here")?;
-    let mods_key = keybinds::to_hypr_mods_key(&new_combo);
-    if mods_key.is_empty() || mods_key.ends_with(',') {
-        return Err("press a key combination first".into());
+    keybinds::validate_combo(&new_combo)?;
+    // Hyprland would silently replace whatever else is on that combo.
+    if let Some(taken) = keybinds::find(&binds, &new_combo).filter(|b| b.combo_id != combo_id) {
+        return Err(format!("{} is already \"{}\"", taken.caps.join(" + "), taken.action));
     }
+    let mods_key = keybinds::to_hypr_mods_key(&new_combo);
     hyprland::rebind_temp(&format!("{mods_key},{raw}"))
 }
 

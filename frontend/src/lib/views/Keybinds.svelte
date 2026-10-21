@@ -85,10 +85,17 @@
 						{@const isOpen = open === key(r)}
 						{@const hasMore = !!(r.command || r.canTry || r.canRebind)}
 						<div class="row-wrap">
-							<button class="row" class:on={isOpen} aria-expanded={hasMore ? isOpen : undefined} disabled={!hasMore} onclick={() => toggle(r)}>
-								<Keys caps={r.caps} />
-								<span class="what">{r.label}</span>
-							</button>
+							{#if hasMore}
+								<button class="row" class:on={isOpen} aria-expanded={isOpen} onclick={() => toggle(r)}>
+									<Keys caps={r.caps} />
+									<span class="what">{r.label}</span>
+								</button>
+							{:else}
+								<div class="row static">
+									<Keys caps={r.caps} />
+									<span class="what">{r.label}</span>
+								</div>
+							{/if}
 							{#if isOpen}
 								<div class="more">
 									{#if r.command}<div class="cmd">Runs <code>{r.command}</code></div>{/if}
@@ -123,8 +130,8 @@
 	.card { padding: 12px 6px 6px; }
 	.card .group-title { margin: 0 10px 4px; }
 	.row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 42px; padding: 8px 10px; border: 0; border-radius: 9px; background: transparent; color: var(--fg); text-align: left; cursor: pointer; }
-	.row:disabled { cursor: default; color: var(--fg); }
-	.row:not(:disabled):hover { background: color-mix(in srgb, var(--fg) 4%, transparent); }
+	.row.static { cursor: default; }
+	button.row:hover { background: color-mix(in srgb, var(--fg) 4%, transparent); }
 	.row.on, .row.on:hover { background: var(--accent-soft); }
 	.row :global(.keys) { flex: none; min-width: 136px; }
 	.what { flex: 1; min-width: 0; }

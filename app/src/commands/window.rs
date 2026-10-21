@@ -88,9 +88,19 @@ pub fn presence_started() {
     write_presence(false);
 }
 
+/// Removes the presence file only if it is this process's, so a stray run
+/// (a capture, a stale instance) never deletes the real window's.
 pub fn presence_ended() {
     window_pid().remove();
-    let _ = std::fs::remove_file(presence_path());
+    let path = presence_path();
+    let ours = std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok())
+        .and_then(|v| v.get("pid").and_then(|p| p.as_u64()))
+        == Some(u64::from(std::process::id()));
+    if ours {
+        let _ = std::fs::remove_file(path);
+    }
 }
 
 /// A suggestion that arrived while no window was up waits here for the
@@ -117,7 +127,7 @@ pub fn take_pending_suggestion(app: &AppHandle) {
     }
 }
 
-fn is_visible(app: &AppHandle) -> bool {
+pub fn is_visible(app: &AppHandle) -> bool {
     app.get_webview_window("main").and_then(|w| w.is_visible().ok()).unwrap_or(false)
 }
 
@@ -162,7 +172,7 @@ pub fn dismiss(app: &AppHandle) {
     }
 }
 
-fn quit(app: &AppHandle) {
+pub fn quit(app: &AppHandle) {
     breadd::emit_hidden(false);
     presence_ended();
     app.exit(0);

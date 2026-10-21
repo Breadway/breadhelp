@@ -162,6 +162,32 @@ pub fn find<'a>(binds: &'a [Keybind], combo: &str) -> Option<&'a Keybind> {
     binds.iter().find(|b| b.combo_id == id)
 }
 
+/// Checks a combo typed into the rebind box before it is turned into a
+/// Hyprland bind: modifiers, then exactly one key, every token a plain
+/// keysym-shaped word. Anything else (commas, extra fields, shell or Lua
+/// text) is refused here rather than relying on later stages to choke on it.
+pub fn validate_combo(combo: &str) -> Result<(), String> {
+    let tokens: Vec<String> = combo
+        .split('+')
+        .flat_map(|s| s.split_whitespace())
+        .map(keys::canonical)
+        .collect();
+    let Some((key, mods)) = tokens.split_last() else {
+        return Err("press a key combination first".into());
+    };
+    let plain = |t: &str| !t.is_empty() && t.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == ':');
+    if let Some(bad) = mods.iter().find(|m| !keys::is_modifier(m)) {
+        return Err(format!("\"{bad}\" isn't a modifier (use super, ctrl, alt, shift)"));
+    }
+    if keys::is_modifier(key) {
+        return Err("add a key after the modifiers".into());
+    }
+    if !plain(key) {
+        return Err(format!("\"{key}\" isn't a key name"));
+    }
+    Ok(())
+}
+
 /// Best-effort conversion of a human combo ("super + shift + u") into the
 /// `<mods>_<mods>,<key>` form ("SUPER_SHIFT,U", or ",U" with no modifier)
 /// that `services::hyprland::rebind_temp` parses for the temporary rebind
@@ -439,6 +465,18 @@ mod tests {
         assert_eq!(tidy_label(None, Some("breadclip"), "exec"), "Clipboard history");
         assert_eq!(tidy_label(Some("Lock screen"), Some("loginctl lock-session"), "exec"), "Lock screen");
         assert_eq!(tidy_label(None, None, "fullscreen"), "fullscreen");
+    }
+
+    #[test]
+    fn rebind_text_is_modifiers_then_one_key() {
+        assert!(validate_combo("super + shift + u").is_ok());
+        assert!(validate_combo("super + ,").is_ok());
+        assert!(validate_combo("f5").is_ok());
+        assert!(validate_combo("super + x,exec,foo").is_err());
+        assert!(validate_combo("u + super").is_err());
+        assert!(validate_combo("super + shift").is_err());
+        assert!(validate_combo("super + 'x'").is_err());
+        assert!(validate_combo("  ").is_err());
     }
 
     #[test]

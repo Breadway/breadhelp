@@ -14,7 +14,8 @@ fn runtime_dir() -> PathBuf {
 
 pub struct PidFile {
     path: PathBuf,
-    /// `/proc/<pid>/comm` prefix the owner has (comm is cut to 15 bytes).
+    /// The owner's exact `/proc/<pid>/comm` (the kernel cuts it to 15
+    /// bytes, so names longer than that are compared on their first 15).
     comm: &'static str,
 }
 
@@ -23,7 +24,7 @@ impl PidFile {
         Self { path, comm }
     }
 
-    /// `<runtime dir>/<name>.pid`, owned by a process whose comm starts with `comm`.
+    /// `<runtime dir>/<name>.pid`, owned by a process whose comm is `comm`.
     pub fn named(name: &str, comm: &'static str) -> Self {
         Self { path: runtime_dir().join(format!("{name}.pid")), comm }
     }
@@ -46,7 +47,8 @@ impl PidFile {
         }
     }
 
-    fn pid(&self) -> Option<u32> {
+    /// The pid in the file, if any. Whether it is alive is [`Self::alive`].
+    pub fn pid(&self) -> Option<u32> {
         std::fs::read_to_string(&self.path).ok()?.trim().parse().ok()
     }
 
@@ -54,8 +56,10 @@ impl PidFile {
         let Some(pid) = self.pid() else {
             return false;
         };
+        // Exact, not a prefix: `breadhelp` must not match `breadhelp-tour`.
+        let want: String = self.comm.chars().take(15).collect();
         std::fs::read_to_string(format!("/proc/{pid}/comm"))
-            .map(|comm| comm.trim().starts_with(self.comm))
+            .map(|comm| comm.trim_end_matches('\n') == want)
             .unwrap_or(false)
     }
 }
@@ -70,6 +74,13 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         // This test process is not named "breadhelp-nope".
         let f = PidFile::new_unchecked(dir.join("x.pid"), "breadhelp-nope");
+        // A prefix of this test binary's own name must not count either.
+        let own: String = std::fs::read_to_string("/proc/self/comm").unwrap().trim().chars().take(3).collect();
+        let leaked: &'static str = Box::leak(own.into_boxed_str());
+        let prefix = PidFile::new_unchecked(dir.join("y.pid"), leaked);
+        prefix.write();
+        assert!(!prefix.alive(), "a comm prefix matched");
+        prefix.remove();
         assert!(!f.alive());
         f.write();
         assert!(!f.alive());
