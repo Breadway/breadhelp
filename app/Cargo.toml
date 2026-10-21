@@ -1,0 +1,34 @@
+[package]
+name = "breadhelp"
+description = "Onboarding and help center for Bread OS"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+# The `_lib` suffix keeps the lib name distinct from the bin name (a Tauri
+# convention; see bos-settings' manifest).
+name = "breadhelp_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+# Default-on so a plain `cargo build --release` embeds the built frontend
+# instead of loading it from `devUrl`; `cargo tauri dev` turns it off. See
+# https://v2.tauri.app/reference/cargo-features/#custom-protocol
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[dependencies]
+breadhelp-core.workspace = true
+tauri = { version = "2", features = [] }
+tauri-plugin-single-instance = "2"
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+bread-utils.workspace = true
+bread-theme.workspace = true
+notify = "7"
+tokio = { version = "1", features = ["time"] }

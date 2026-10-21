@@ -1,5 +1,7 @@
-# Symptom tree for the troubleshooting wizard, walked by
-# src/ui/troubleshoot_wizard.rs via src/content/troubleshoot.rs.
+# Symptom tree for Fix a problem, loaded by
+# crates/breadhelp-core/src/content/troubleshoot.rs.
+title = "Sound"
+summary = "No sound, or the wrong speakers"
 
 [[node]]
 id = "start"

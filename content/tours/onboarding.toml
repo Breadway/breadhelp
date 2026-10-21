@@ -1,4 +1,4 @@
-# Live guided tour steps, walked by ui::tour. Phase A validation subset,
+# Live guided tour steps, walked by breadhelp-tour. Phase A validation subset,
 # just enough to prove the spotlight/must-do engine end-to-end (breadbar's
 # plain observe-only highlight, breadbox's real openlayer detection) before
 # authoring the full app-by-app tour. See breadhelp-tour.lua for the
@@ -7,7 +7,7 @@
 [[step]]
 id = "welcome"
 title = "Welcome to BOS"
-body = "This is a quick, hands-on tour of your desktop. Instead of just describing things, we'll point at the real thing on screen as we go. Press Next when you're ready."
+body = "This is a quick, hands-on tour of your desktop. Instead of just describing things, we'll point at the real thing on screen as we go."
 
 [[step]]
 id = "breadbar"
@@ -18,7 +18,26 @@ target_namespace = "breadbar"
 [[step]]
 id = "breadbox"
 title = "Opening apps"
-body = "Everything in BOS opens from here. Press [Show Keybind]super + space[/Show Keybind] to open breadbox, then start typing an app's name and press Enter to launch it."
+body = "Everything in BOS opens from breadbox. Open it, start typing an app's name, and press Enter to launch it."
 target_namespace = "breadbox"
 launch = "breadbox"
 success_event = "layer-closed:breadbox"
+keybind = "super + space"
+confirmed_text = "Nice work. That was the real launcher, and you just used it."
+
+[[step]]
+id = "finish"
+title = "You're all set"
+body = "Those are the basics. Help is one key away whenever you want more: guides, keybinds and one-click fixes."
+
+[[step.shortcuts]]
+label = "Every keybind, any time"
+keybind = "super + /"
+
+[[step.shortcuts]]
+label = "Open any app"
+keybind = "super + space"
+
+[[step.shortcuts]]
+label = "Settings"
+keybind = "super + ,"
