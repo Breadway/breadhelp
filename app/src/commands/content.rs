@@ -232,18 +232,26 @@ pub fn keybinds_view(binds: &[Keybind]) -> KeybindsView {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FixView {
     id: &'static str,
     label: &'static str,
     description: &'static str,
     tags: &'static str,
+    requires_confirm: bool,
 }
 
 #[tauri::command]
 pub fn list_fixes() -> Vec<FixView> {
     fixes::QUICK_FIXES
         .iter()
-        .map(|f| FixView { id: f.id, label: f.label, description: f.description, tags: f.tags })
+        .map(|f| FixView {
+            id: f.id,
+            label: f.label,
+            description: f.description,
+            tags: f.tags,
+            requires_confirm: f.requires_confirm,
+        })
         .collect()
 }
 

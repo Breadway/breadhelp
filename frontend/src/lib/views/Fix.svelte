@@ -9,6 +9,7 @@
 	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 	import FixList from "$lib/components/FixList.svelte";
 	import { api } from "$lib/api";
+	import { confirmFix } from "$lib/confirm.svelte";
 	import { data } from "$lib/data.svelte";
 	import { go, nav } from "$lib/nav.svelte";
 
@@ -19,7 +20,6 @@
 
 	let node = $state("start");
 	let result: "running" | "done" | "failed" | null = $state(null);
-	let confirming = $state(false);
 
 	const picked = $derived(nav.symptom || data.symptoms[0]?.id || OTHER);
 	const tree = $derived(data.symptoms.find((t) => t.id === picked));
@@ -39,23 +39,19 @@
 	function reset() {
 		node = "start";
 		result = null;
-		confirming = false;
 	}
 	function goto(id: string) {
 		node = id;
 		result = null;
-		confirming = false;
 	}
 	async function runFix() {
-		if (!tree || !current) return;
-		if (current.requiresConfirm && !confirming) {
-			confirming = true;
-			return;
-		}
-		confirming = false;
+		if (!tree || !current || !current.fix) return;
+		const requiresConfirm = current.requiresConfirm;
+		// Declining leaves everything untouched: no command is invoked.
+		if (!(await confirmFix({ label: current.fix, requiresConfirm }))) return;
 		result = "running";
 		try {
-			result = (await api.runSymptomFix(tree.id, current.id)) ? "done" : "failed";
+			result = (await api.runSymptomFix(tree.id, current.id, requiresConfirm)) ? "done" : "failed";
 		} catch {
 			result = "failed";
 		}
@@ -103,7 +99,7 @@
 						{#if result === "done"}<span class="st ok">Done. Did that fix it?</span>{/if}
 						{#if result === "failed"}<span class="st bad">That didn't work. Try Start over or report it.</span>{/if}
 						<button class="btn primary" disabled={result === "running"} onclick={runFix}>
-							{result === "running" ? "Running..." : confirming ? "Yes, run it" : "Run fix"}
+							{result === "running" ? "Running..." : "Run fix"}
 						</button>
 					</div>
 				{/if}

@@ -1,14 +1,16 @@
 <script lang="ts">
 	// One-click fixes as rows with a Run button and the outcome beside it.
 	import { api, type Fix } from "$lib/api";
+	import { confirmFix } from "$lib/confirm.svelte";
 
 	let { fixes }: { fixes: Fix[] } = $props();
 	let status: Record<string, "running" | "done" | "failed"> = $state({});
 
 	async function run(fix: Fix) {
+		if (!(await confirmFix(fix))) return;
 		status[fix.id] = "running";
 		try {
-			status[fix.id] = (await api.runFix(fix.id)) ? "done" : "failed";
+			status[fix.id] = (await api.runFix(fix.id, fix.requiresConfirm)) ? "done" : "failed";
 		} catch {
 			status[fix.id] = "failed";
 		}

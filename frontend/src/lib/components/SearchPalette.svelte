@@ -5,6 +5,7 @@
 	import Search from "@lucide/svelte/icons/search";
 	import Keys from "./Keys.svelte";
 	import { api } from "$lib/api";
+	import { confirmFix } from "$lib/confirm.svelte";
 	import { searchEntries } from "$lib/data.svelte";
 	import { go, nav } from "$lib/nav.svelte";
 	import { flat, search, type Entry } from "$lib/search";
@@ -34,10 +35,14 @@
 	async function activate(entry: Entry | undefined) {
 		if (!entry) return;
 		switch (entry.kind) {
-			case "fix":
+			case "fix": {
+				const requiresConfirm = entry.requiresConfirm ?? false;
+				// Declining closes the prompt and runs nothing.
+				if (!(await confirmFix({ label: entry.title, description: entry.body, requiresConfirm }))) return;
 				status = `${entry.title}...`;
-				status = (await api.runFix(entry.id)) ? `${entry.title}: done.` : `${entry.title}: something went wrong.`;
+				status = (await api.runFix(entry.id, requiresConfirm)) ? `${entry.title}: done.` : `${entry.title}: something went wrong.`;
 				break;
+			}
 			case "symptom":
 				go("fix", { symptom: entry.id });
 				break;
