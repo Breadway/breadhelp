@@ -5,8 +5,6 @@
 //! to keep hand-authored `onboarding.toml` simple; `target()`/`success()`
 //! turn that into the richer shape `ui::tour` actually wants to match on.
 
-use std::path::Path;
-
 #[derive(Clone)]
 pub enum Target {
     /// A `gtk4-layer-shell` surface identified by namespace, e.g. "breadbox".
@@ -108,31 +106,23 @@ struct TourFile {
     steps: Vec<Step>,
 }
 
-const SYSTEM_TOUR_PATH: &str = "/usr/share/breadhelp/content/tours/onboarding.toml";
 const TOUR_SUBPATH: &str = "tours/onboarding.toml";
 
 pub fn parse(text: &str) -> Result<Vec<Step>, toml::de::Error> {
     toml::from_str::<TourFile>(text).map(|f| f.steps)
 }
 
-/// Checks the user content root first (where bakery installs content,
-/// see `content::user_content_root`), falling back to the system path a
-/// pacman package would have used. Same "user copy wins" precedent as
-/// `ContentStore::load`.
+/// Resolves the tour through the same precedence as `ContentStore::load`:
+/// user root, system roots (including bakery's `/usr/local` prefix), then the
+/// copy embedded in the binary. Same "user copy wins" precedent.
 pub fn load() -> Vec<Step> {
-    let user_path = super::user_content_root().join(TOUR_SUBPATH);
-    let path = if user_path.exists() {
-        user_path
-    } else {
-        Path::new(SYSTEM_TOUR_PATH).to_path_buf()
-    };
-    let Ok(text) = std::fs::read_to_string(&path) else {
+    let Some(text) = super::content_file(TOUR_SUBPATH) else {
         return Vec::new();
     };
     match parse(&text) {
         Ok(steps) => steps,
         Err(e) => {
-            eprintln!("breadhelp: {} failed to parse: {e}", path.display());
+            eprintln!("breadhelp: {} failed to parse: {e}", TOUR_SUBPATH);
             Vec::new()
         }
     }
@@ -141,15 +131,26 @@ pub fn load() -> Vec<Step> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn embedded_tour_parses_without_a_content_checkout() {
+        let text = super::super::embedded_file(TOUR_SUBPATH).expect("embedded onboarding.toml");
+        let steps = parse(text).unwrap();
+        assert!(!steps.is_empty());
+    }
 
     #[test]
     fn shipped_tour_parses_and_ends_on_the_shortcuts_step() {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../content/tours/onboarding.toml");
+        let path =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../content/tours/onboarding.toml");
         let steps = parse(&std::fs::read_to_string(path).unwrap()).unwrap();
         let ids: Vec<&str> = steps.iter().map(|s| s.id.as_str()).collect();
         assert_eq!(ids, vec!["welcome", "breadbar", "breadbox", "finish"]);
         let launcher = &steps[2];
-        assert!(matches!(launcher.success(), Success::Event(ref e) if e == "layer-closed:breadbox"));
+        assert!(
+            matches!(launcher.success(), Success::Event(ref e) if e == "layer-closed:breadbox")
+        );
         assert_eq!(launcher.keybind.as_deref(), Some("super + space"));
         let last = steps.last().unwrap();
         assert!(matches!(last.target(), Target::None));

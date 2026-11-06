@@ -27,6 +27,17 @@ For frontend work, `cargo tauri dev` in `app/` (or `npm --prefix frontend run de
 
 See `CONTRIBUTING.md` for the single-trunk + tag model. `main` publishes a bakery **dev** build; a `vX.Y.Z-rc.N` tag publishes **beta**; a `vX.Y.Z` tag publishes **stable**. The leftover `packaging/` tree is not a pacman source; bakery is canonical (see `packaging/README.md`).
 
+## Content layout
+
+Guides, the onboarding tour and the symptom trees resolve in this order:
+
+1. `~/.local/share/breadhelp/content/` (user overrides/additions)
+2. `/usr/local/share/breadhelp/content/` (bakery system install on BOS: `/etc/bakery/config.toml` sets `prefix = "/usr/local"`)
+3. `/usr/share/breadhelp/content/` (manual or distro system install)
+4. The `content/` tree compiled into both binaries as a fallback
+
+A colliding guide directory is replaced wholesale by the higher-precedence copy; there is no field-level merge. `bakery.toml` ships `content/` as `content.tar.gz`, which bakery extracts to `<prefix>/share/breadhelp/content`, and the BOS ISO bake copies the builder's extracted tree to `/usr/local/share/breadhelp/content`. The embedded copy keeps the Learn tab populated when an install's data archive is missing (HELP-20) and lets a source build run without a checkout.
+
 ## bread event integration
 
 Works the same with or without `breadd`. When the main window is shown,

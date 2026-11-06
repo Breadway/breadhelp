@@ -1,8 +1,15 @@
 # breadhelp content
 
-Guides and troubleshooting data, installed to `/usr/share/breadhelp/content/`.
-User overrides/additions live at `~/.local/share/breadhelp/content/` (same
-shape; a colliding guide directory name wins wholesale over the system copy).
+Guides and troubleshooting data. The runtime looks in this order:
+
+1. `~/.local/share/breadhelp/content/` (user overrides/additions)
+2. `/usr/local/share/breadhelp/content/` (bakery system install on BOS)
+3. `/usr/share/breadhelp/content/` (manual or distro system install)
+4. This `content/` tree embedded in the binaries as a fallback
+
+A colliding guide directory name wins wholesale over a lower-precedence copy.
+Bakery ships this tree as `content.tar.gz`; BOS extracts it under
+`/usr/local/share/breadhelp/` at bake time.
 
 Categories are just top-level directories here: the Guides page lists whatever
 exists, so adding a category is a content change, not a code change:

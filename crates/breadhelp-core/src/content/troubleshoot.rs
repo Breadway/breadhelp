@@ -47,8 +47,30 @@ impl SymptomTree {
     }
 }
 
-const SYSTEM_SYMPTOMS_DIR: &str = "/usr/share/breadhelp/content/troubleshooting/_symptoms";
 const SYMPTOMS_SUBPATH: &str = "troubleshooting/_symptoms";
+
+fn insert_tree(
+    stem: &str,
+    text: &str,
+    origin: &str,
+    out: &mut std::collections::BTreeMap<String, SymptomTree>,
+) {
+    match toml::from_str::<SymptomTree>(text) {
+        Ok(mut tree) => {
+            if tree.title.is_empty() {
+                // Content older than the title field: "no-sound" -> "No sound".
+                let words = stem.replace('-', " ");
+                let mut c = words.chars();
+                tree.title = c
+                    .next()
+                    .map(|f| f.to_uppercase().collect::<String>() + c.as_str())
+                    .unwrap_or_default();
+            }
+            out.insert(stem.to_string(), tree);
+        }
+        Err(e) => eprintln!("breadhelp: {origin} failed to parse: {e}"),
+    }
+}
 
 fn scan_symptoms_dir(dir: &Path, out: &mut std::collections::BTreeMap<String, SymptomTree>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
@@ -65,29 +87,41 @@ fn scan_symptoms_dir(dir: &Path, out: &mut std::collections::BTreeMap<String, Sy
         let Ok(text) = std::fs::read_to_string(&path) else {
             continue;
         };
-        match toml::from_str::<SymptomTree>(&text) {
-            Ok(mut tree) => {
-                if tree.title.is_empty() {
-                    // Content older than the title field: "no-sound" -> "No sound".
-                    let words = stem.replace('-', " ");
-                    let mut c = words.chars();
-                    tree.title = c.next().map(|f| f.to_uppercase().collect::<String>() + c.as_str()).unwrap_or_default();
-                }
-                out.insert(stem.to_string(), tree);
-            }
-            Err(e) => eprintln!("breadhelp: {} failed to parse: {e}", path.display()),
+        insert_tree(stem, &text, &path.display().to_string(), out);
+    }
+}
+
+fn scan_symptoms_embedded(
+    dir: &'static include_dir::Dir<'static>,
+    out: &mut std::collections::BTreeMap<String, SymptomTree>,
+) {
+    for file in dir.files() {
+        if file.path().extension().and_then(|e| e.to_str()) != Some("toml") {
+            continue;
         }
+        let Some(stem) = file.path().file_stem().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        let Some(text) = file.contents_utf8() else {
+            continue;
+        };
+        insert_tree(stem, text, &file.path().display().to_string(), out);
     }
 }
 
 /// Loads every `*.toml` file in the symptoms directory, keyed by file stem so
-/// a `SymptomOption::goto` of `"no-sound:check-mute"` can be resolved. Scans
-/// the system path (a pacman package's location) then the user content root
-/// (where bakery installs content, see `content::user_content_root`), the
-/// same "user copy wins on collision" precedent as `ContentStore::load`.
+/// a `SymptomOption::goto` of `"no-sound:check-mute"` can be resolved. Uses
+/// the same precedence as `ContentStore::load`: embedded fallback first, then
+/// the system roots in reverse (bakery's `/usr/local` install wins over
+/// `/usr/share`), then the user content root last.
 pub fn load_all() -> std::collections::BTreeMap<String, SymptomTree> {
     let mut out = std::collections::BTreeMap::new();
-    scan_symptoms_dir(Path::new(SYSTEM_SYMPTOMS_DIR), &mut out);
+    if let Some(dir) = super::embedded_dir(SYMPTOMS_SUBPATH) {
+        scan_symptoms_embedded(dir, &mut out);
+    }
+    for root in super::SYSTEM_ROOTS.iter().rev() {
+        scan_symptoms_dir(&Path::new(root).join(SYMPTOMS_SUBPATH), &mut out);
+    }
     scan_symptoms_dir(&super::user_content_root().join(SYMPTOMS_SUBPATH), &mut out);
     out
 }
@@ -97,18 +131,41 @@ mod tests {
     use super::*;
 
     #[test]
+    fn embedded_trees_exist_without_a_content_checkout() {
+        let mut trees = std::collections::BTreeMap::new();
+        let dir = super::super::embedded_dir(SYMPTOMS_SUBPATH).expect("embedded symptoms dir");
+        scan_symptoms_embedded(dir, &mut trees);
+        assert!(trees.len() >= 2);
+        for (stem, tree) in &trees {
+            assert!(tree.node("start").is_some(), "{stem} has no start node");
+        }
+    }
+
+    #[test]
     fn shipped_trees_parse_and_every_goto_resolves() {
         let mut trees = std::collections::BTreeMap::new();
-        scan_symptoms_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../content/troubleshooting/_symptoms"), &mut trees);
+        scan_symptoms_dir(
+            &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../content/troubleshooting/_symptoms"),
+            &mut trees,
+        );
         assert!(trees.len() >= 2);
         for (stem, tree) in &trees {
             assert!(!tree.summary.is_empty(), "{stem} has no summary");
             assert!(tree.node("start").is_some(), "{stem} has no start node");
             for node in &tree.nodes {
                 for opt in &node.options {
-                    assert!(tree.node(&opt.goto).is_some(), "{stem}:{} goes to missing {}", node.id, opt.goto);
+                    assert!(
+                        tree.node(&opt.goto).is_some(),
+                        "{stem}:{} goes to missing {}",
+                        node.id,
+                        opt.goto
+                    );
                 }
-                assert!(node.fix.is_some() || !node.options.is_empty(), "{stem}:{} is a dead end", node.id);
+                assert!(
+                    node.fix.is_some() || !node.options.is_empty(),
+                    "{stem}:{} is a dead end",
+                    node.id
+                );
             }
         }
     }
