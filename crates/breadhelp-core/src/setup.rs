@@ -25,7 +25,11 @@ pub fn pick_network_tool(
     has_nm: bool,
 ) -> Option<(&'static str, &'static str, &'static [&'static str])> {
     if has_settings {
-        Some(("Open network settings", "bos-settings", &["--page", "network"]))
+        Some((
+            "Open network settings",
+            "bos-settings",
+            &["--page", "network"],
+        ))
     } else if has_nm {
         Some(("Open network editor", "nm-connection-editor", &[]))
     } else {
@@ -101,12 +105,18 @@ pub fn apply_timezone(tz: &str) -> (String, bool) {
         return (format!("Timezone set to {tz}."), true);
     }
     if !exec::command_exists("pkexec") {
-        return ("Need permission to change the timezone, and pkexec isn't available.".into(), false);
+        return (
+            "Need permission to change the timezone, and pkexec isn't available.".into(),
+            false,
+        );
     }
     if exec::run_argv_status("pkexec", &["timedatectl", "set-timezone", tz]) {
         (format!("Timezone set to {tz}."), true)
     } else {
-        ("Couldn't change the timezone. You can try again from BOS Settings.".into(), false)
+        (
+            "Couldn't change the timezone. You can try again from BOS Settings.".into(),
+            false,
+        )
     }
 }
 
@@ -151,8 +161,13 @@ mod tests {
     }
 
     #[test]
-    fn updates_tool_only_when_settings_exists() {
-        assert!(pick_updates_tool(true).is_some());
+    fn updates_tool_opens_the_updates_page() {
+        let (label, prog, args) = pick_updates_tool(true).unwrap();
+        assert_eq!(prog, "bos-settings");
+        // The step must land on Updates, not whatever page bos-settings
+        // happened to show last.
+        assert_eq!(args, &["--page", "updates"]);
+        assert_eq!(label, "Open Updates");
         assert!(pick_updates_tool(false).is_none());
     }
 

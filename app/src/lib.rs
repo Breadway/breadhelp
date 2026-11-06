@@ -168,6 +168,18 @@ fn settle_first_launch(app: &AppHandle, args: &cli::Args, shown: bool, tour_star
     window::quit(app);
 }
 
+/// Which page a launch asks for. A bare launch (Super + /) is the keybind
+/// cheatsheet even before setup is finished; only the `--autostart` entry
+/// shows the first-run wizard, and only while it is genuinely still needed.
+/// `None` means autostart has nothing to show and should stay hidden.
+fn launch_page(args: &cli::Args, setup_needed: bool) -> Option<&str> {
+    if args.autostart {
+        if setup_needed { Some("setup") } else { None }
+    } else {
+        Some(args.page.as_deref().unwrap_or("keybinds"))
+    }
+}
+
 /// One launch's worth of argv, first launch or forwarded. Returns whether
 /// it showed the window.
 fn handle(app: &AppHandle, args: &cli::Args) -> bool {
@@ -186,14 +198,42 @@ fn handle(app: &AppHandle, args: &cli::Args) -> bool {
         // Autostart is only ever visible on a genuine first run (setup, then
         // the tour). Reaching here otherwise means the resident setting is
         // on: stay loaded and hidden. `main` already started the tour.
-        if setup::needs_setup() {
-            window::show(app, "setup", true);
+        if let Some(page) = launch_page(args, setup::needs_setup()) {
+            window::show(app, page, true);
             return true;
         }
         return false;
     }
     // Super + / is a bare launch: the keybind reference, always.
-    let page = args.page.as_deref().unwrap_or("keybinds");
+    let page = launch_page(args, false).unwrap_or("keybinds");
     window::show(app, page, false);
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn args(page: Option<&str>, autostart: bool) -> cli::Args {
+        cli::Args { page: page.map(str::to_string), autostart, ..cli::Args::default() }
+    }
+
+    #[test]
+    fn bare_launch_is_the_keybind_cheatsheet_even_before_setup_finishes() {
+        // The SUPER+/ bind says "Show this keybind cheatsheet"; it must not
+        // pull a fresh user into the first-run wizard instead.
+        assert_eq!(launch_page(&args(None, false), true), Some("keybinds"));
+        assert_eq!(launch_page(&args(None, false), false), Some("keybinds"));
+    }
+
+    #[test]
+    fn autostart_shows_the_wizard_only_when_setup_is_needed() {
+        assert_eq!(launch_page(&args(None, true), true), Some("setup"));
+        assert_eq!(launch_page(&args(None, true), false), None);
+    }
+
+    #[test]
+    fn an_explicit_page_still_wins_over_the_cheatsheet() {
+        assert_eq!(launch_page(&args(Some("fix"), false), true), Some("fix"));
+    }
 }

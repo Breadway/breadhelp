@@ -53,9 +53,9 @@ export interface Setup {
 	updatesTool: { label: string } | null;
 	hasBreadcrumbs: boolean;
 	snapper: boolean;
-	snapshotAttempted: boolean;
 }
 export interface Outcome { message: string; ok: boolean }
+export interface TourOutcome extends Outcome { tourStarted: boolean }
 
 export const api = {
 	openState: () => invoke<Open>("get_open_state"),
@@ -84,7 +84,7 @@ export const api = {
 
 	openSettings: (page: string) => invoke<void>("open_settings", { page }),
 	reportProblem: () => invoke<void>("report_problem"),
-	startTour: () => invoke<void>("start_tour"),
+	startTour: () => invoke<TourOutcome>("start_tour"),
 
 	setup: () => invoke<Setup>("get_setup"),
 	setSetupStep: (step: number) => invoke<void>("set_setup_step", { step }),
@@ -92,5 +92,5 @@ export const api = {
 	openNetworkTool: () => invoke<void>("open_network_tool"),
 	openUpdatesTool: () => invoke<void>("open_updates_tool"),
 	createSnapshot: () => invoke<Outcome>("create_snapshot"),
-	finishSetup: () => invoke<void>("finish_setup"),
+	finishSetup: () => invoke<TourOutcome>("finish_setup"),
 };

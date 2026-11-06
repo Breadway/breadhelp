@@ -11,7 +11,7 @@
 	import Type from "@lucide/svelte/icons/type";
 	import { api, type Mode, type Page } from "$lib/api";
 	import { data } from "$lib/data.svelte";
-	import { go, nav } from "$lib/nav.svelte";
+	import { go, nav, startTour } from "$lib/nav.svelte";
 
 	const items: { page: Page; label: string; icon: typeof House; hint?: string }[] = [
 		{ page: "home", label: "Home", icon: House },
@@ -54,9 +54,10 @@
 			</button>
 		{/each}
 		<div class="section-header">Getting started</div>
-		<button class="item" onclick={() => api.startTour()}>
+		<button class="item" onclick={startTour}>
 			<CirclePlay size={17} /><span class="label">Take the tour</span>
 		</button>
+		{#if nav.tourStatus}<p class="tour-status" role="status" aria-live="polite">{nav.tourStatus}</p>{/if}
 		{#if data.setupNeeded}
 			<button class="item" class:selected={nav.page === "setup"} aria-current={nav.page === "setup" ? "page" : undefined} onclick={() => go("setup")}>
 				<Flag size={17} /><span class="label">Finish setup</span><small class="badge">{data.setupStepsLeft} left</small>
@@ -91,6 +92,7 @@
 	.item :global(svg) { flex: none; }
 	.label { flex: 1; }
 	.badge { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: var(--accent); color: var(--on-accent); }
+	.tour-status { margin: 4px 10px 6px; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
 	.keep { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 12.5px; cursor: pointer; }
 	.keep input { margin: 2px 0 0; accent-color: var(--accent); width: 15px; height: 15px; flex: none; }
 	.keep small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }

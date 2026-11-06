@@ -145,11 +145,22 @@ pub fn report_problem() {
 }
 
 /// "Take the tour": restart the tour from the first step, and get this
-/// window out of the way (hidden or closed, per the resident setting).
+/// window out of the way only once the tour process is actually up. If it
+/// is not, the window stays with a reason rather than vanishing silently.
 #[tauri::command]
-pub fn start_tour(app: AppHandle) {
+pub async fn start_tour(app: AppHandle) -> super::TourOutcome {
     tourctl::spawn_tour(&["--onboard"]);
-    super::window::dismiss(&app);
+    let started = tauri::async_runtime::spawn_blocking(super::wait_for_tour).await.unwrap_or(false);
+    if started {
+        super::window::dismiss(&app);
+        super::TourOutcome { ok: true, message: "Starting the tour...".into(), tour_started: true }
+    } else {
+        super::TourOutcome {
+            ok: false,
+            message: "The tour didn't start. Check that breadhelp-tour is installed, then try again.".into(),
+            tour_started: false,
+        }
+    }
 }
 
 #[cfg(test)]
