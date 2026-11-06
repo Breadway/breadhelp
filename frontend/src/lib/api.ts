@@ -34,7 +34,7 @@ export interface KeyRow {
 }
 export interface Keybinds { rows: KeyRow[]; categories: { id: string; title: string }[]; source: string; bindCount: number }
 
-export interface Fix { id: string; label: string; description: string; tags: string }
+export interface Fix { id: string; label: string; description: string; tags: string; requiresConfirm: boolean }
 export interface GalleryCommand { name: string; description: string }
 
 export interface SymptomNode { id: string; prompt: string; options: { label: string; goto: string }[]; fix: string | null; requiresConfirm: boolean }
@@ -76,9 +76,9 @@ export const api = {
 	rebindKeybind: (comboId: string, newCombo: string) => invoke<void>("rebind_keybind", { comboId, newCombo }),
 
 	fixes: () => invoke<Fix[]>("list_fixes"),
-	runFix: (id: string) => invoke<boolean>("run_fix", { id }),
+	runFix: (id: string, confirmed: boolean) => invoke<boolean>("run_fix", { id, confirmed }),
 	symptoms: () => invoke<SymptomTree[]>("list_symptoms"),
-	runSymptomFix: (tree: string, node: string) => invoke<boolean>("run_symptom_fix", { tree, node }),
+	runSymptomFix: (tree: string, node: string, confirmed: boolean) => invoke<boolean>("run_symptom_fix", { tree, node, confirmed }),
 	commands: () => invoke<GalleryCommand[]>("list_commands"),
 	runCommand: (name: string) => invoke<void>("run_gallery_command", { name }),
 

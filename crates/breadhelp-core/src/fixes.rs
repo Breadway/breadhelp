@@ -10,6 +10,9 @@ pub struct QuickFix {
     pub command: &'static str,
     /// Words search matches on besides the label.
     pub tags: &'static str,
+    /// Ask before running: the command changes state a person may not expect
+    /// (the backend refuses to run it without an explicit confirmation).
+    pub requires_confirm: bool,
 }
 
 pub const QUICK_FIXES: &[QuickFix] = &[
@@ -19,6 +22,7 @@ pub const QUICK_FIXES: &[QuickFix] = &[
         description: "Restarts PipeWire and WirePlumber.",
         command: "systemctl --user restart wireplumber pipewire pipewire.socket pipewire-pulse pipewire-pulse.socket",
         tags: "audio speakers no sound volume pipewire",
+        requires_confirm: false,
     },
     QuickFix {
         id: "wifi",
@@ -26,6 +30,7 @@ pub const QUICK_FIXES: &[QuickFix] = &[
         description: "Turns the Wi-Fi radio off and back on.",
         command: "nmcli radio wifi off && sleep 1 && nmcli radio wifi on",
         tags: "wifi wi-fi network internet wireless",
+        requires_confirm: false,
     },
     QuickFix {
         id: "update",
@@ -33,6 +38,7 @@ pub const QUICK_FIXES: &[QuickFix] = &[
         description: "System packages and bread apps, in one go.",
         command: "bos-update",
         tags: "update upgrade bakery pacman",
+        requires_confirm: false,
     },
     QuickFix {
         id: "backup",
@@ -40,6 +46,7 @@ pub const QUICK_FIXES: &[QuickFix] = &[
         description: "Takes a system snapshot you can roll back to.",
         command: "snapper -c root create --description 'breadhelp manual backup'",
         tags: "backup snapshot snapper restore",
+        requires_confirm: false,
     },
 ];
 

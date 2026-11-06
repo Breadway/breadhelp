@@ -15,6 +15,8 @@ export interface Entry {
 	body: string;
 	/** Extra words that match but aren't shown. */
 	tags: string;
+	/** A fix authored with requires_confirm: ask before running it. */
+	requiresConfirm?: boolean;
 	caps?: string[];
 }
 

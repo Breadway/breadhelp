@@ -10,24 +10,44 @@ use breadhelp_core::services::{exec, hyprland};
 use breadhelp_core::{fixes, tourctl};
 use tauri::AppHandle;
 
+/// The safety gate every run command goes through. A fix authored with
+/// `requires_confirm` only runs when the caller says the user already
+/// answered a confirmation prompt; nothing about the fix's id or text can
+/// bypass it. Fixes without the flag keep running directly.
+pub fn confirm_guard(label: &str, requires_confirm: bool, confirmed: bool) -> Result<(), String> {
+    if requires_confirm && !confirmed {
+        return Err(format!("{label} needs confirmation before it can run"));
+    }
+    Ok(())
+}
+
+/// The command a run is about to execute, returned only after the gate has
+/// passed. Both run commands call this, so neither can drop the check.
+fn confirmed_command(label: &str, requires_confirm: bool, command: &str, confirmed: bool) -> Result<String, String> {
+    confirm_guard(label, requires_confirm, confirmed)?;
+    Ok(command.to_string())
+}
+
 /// One-click fix from the Home / Fix a problem lists. Waits for the fix to
-/// finish and reports whether it succeeded.
+/// finish and reports whether it succeeded. `confirmed` is the webview's
+/// answer to the prompt this fix requested (see `confirm_guard`).
 #[tauri::command]
-pub async fn run_fix(id: String) -> Result<bool, String> {
+pub async fn run_fix(id: String, confirmed: bool) -> Result<bool, String> {
     let fix = fixes::quick_fix(&id).ok_or_else(|| format!("unknown fix {id:?}"))?;
-    Ok(tauri::async_runtime::spawn_blocking(move || exec::run_status(fix.command)).await.unwrap_or(false))
+    let command = confirmed_command(fix.label, fix.requires_confirm, fix.command, confirmed)?;
+    Ok(tauri::async_runtime::spawn_blocking(move || exec::run_status(&command)).await.unwrap_or(false))
 }
 
 /// The fix at the end of a symptom tree, by tree file stem and node id.
 #[tauri::command]
-pub async fn run_symptom_fix(tree: String, node: String) -> Result<bool, String> {
+pub async fn run_symptom_fix(tree: String, node: String, confirmed: bool) -> Result<bool, String> {
     let trees = troubleshoot::load_all();
-    let command = trees
+    let fix = trees
         .get(&tree)
         .and_then(|t| t.node(&node))
         .and_then(|n| n.fix.as_ref())
-        .map(|f| f.command.clone())
         .ok_or_else(|| format!("no fix at {tree}:{node}"))?;
+    let command = confirmed_command(&fix.description, fix.requires_confirm, &fix.command, confirmed)?;
     Ok(tauri::async_runtime::spawn_blocking(move || exec::run_status(&command)).await.unwrap_or(false))
 }
 
@@ -143,5 +163,31 @@ mod tests {
         assert!(open_settings("../../bin/sh".into()).is_err());
         assert!(open_settings("keybinds; reboot".into()).is_err());
         assert!(SETTINGS_PAGES.contains(&"keybinds"));
+    }
+
+    #[test]
+    fn a_requires_confirm_fix_refuses_without_confirmation() {
+        assert!(confirm_guard("Reset the network", true, false).is_err());
+    }
+
+    #[test]
+    fn a_requires_confirm_fix_runs_after_confirmation() {
+        assert!(confirm_guard("Reset the network", true, true).is_ok());
+    }
+
+    #[test]
+    fn a_fix_without_the_flag_runs_directly() {
+        assert!(confirm_guard("Fix sound", false, false).is_ok());
+        assert!(confirm_guard("Fix sound", false, true).is_ok());
+    }
+
+    #[test]
+    fn both_run_commands_apply_the_gate_before_returning_a_command() {
+        assert!(confirmed_command("Reset the network", true, "nmcli radio wifi off", false).is_err());
+        assert_eq!(
+            confirmed_command("Reset the network", true, "nmcli radio wifi off", true).unwrap(),
+            "nmcli radio wifi off"
+        );
+        assert_eq!(confirmed_command("Fix sound", false, "true", false).unwrap(), "true");
     }
 }

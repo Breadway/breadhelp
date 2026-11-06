@@ -32,7 +32,7 @@ export async function refresh(): Promise<void> {
 export function searchEntries(): Entry[] {
 	const out: Entry[] = [];
 	for (const f of data.fixes) {
-		out.push({ kind: "fix", id: f.id, title: f.label, hint: "One click", body: f.description, tags: f.tags });
+		out.push({ kind: "fix", id: f.id, title: f.label, hint: "One click", body: f.description, tags: f.tags, requiresConfirm: f.requiresConfirm });
 	}
 	for (const t of data.symptoms) {
 		out.push({ kind: "symptom", id: t.id, title: `${t.title} troubleshooter`, hint: "Step by step", body: t.summary, tags: t.nodes.map((n) => n.prompt).join(" ") });

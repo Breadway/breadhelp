@@ -5,6 +5,7 @@
 	import Sidebar from "$lib/components/Sidebar.svelte";
 	import SearchPalette from "$lib/components/SearchPalette.svelte";
 	import SuggestionBanner from "$lib/components/SuggestionBanner.svelte";
+	import ConfirmFix from "$lib/components/ConfirmFix.svelte";
 	import Home from "$lib/views/Home.svelte";
 	import Keybinds from "$lib/views/Keybinds.svelte";
 	import Guides from "$lib/views/Guides.svelte";
@@ -102,6 +103,9 @@
 {/if}
 
 {#if nav.searchOpen}<SearchPalette />{/if}
+
+<!-- One prompt for every Run button: Fix view, FixList and search. -->
+<ConfirmFix />
 
 <style>
 	.shell { display: flex; height: 100%; }
