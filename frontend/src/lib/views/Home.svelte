@@ -8,7 +8,7 @@
 	import FixList from "$lib/components/FixList.svelte";
 	import { api } from "$lib/api";
 	import { data } from "$lib/data.svelte";
-	import { go, nav } from "$lib/nav.svelte";
+	import { go, nav, startTour } from "$lib/nav.svelte";
 
 	const startHere = $derived(data.guides.filter((g) => g.category === "getting-started").slice(0, 3));
 
@@ -35,7 +35,7 @@
 			<button class="tile" onclick={() => go("keybinds")}>
 				<Keyboard size={20} /><b>Keybinds</b><small>Every shortcut, read live from your config</small>
 			</button>
-			<button class="tile" onclick={() => api.startTour()}>
+			<button class="tile" onclick={startTour}>
 				<CirclePlay size={20} /><b>Take the tour</b><small>Hands-on, on your real desktop</small>
 			</button>
 			<button class="tile" onclick={() => go("fix")}>
@@ -45,6 +45,7 @@
 				<Flag size={20} /><b>Report a problem</b><small>breadbug, and exactly what it sends</small>
 			</button>
 		</div>
+		{#if nav.tourStatus}<p class="tour-status" role="status" aria-live="polite">{nav.tourStatus}</p>{/if}
 
 		<section class="group" aria-labelledby="qf">
 			<h2 class="group-title" id="qf">Quick fixes</h2>
@@ -70,6 +71,7 @@
 	.searchbar kbd { font-family: ui-monospace, monospace; font-size: 10px; border: 1px solid var(--line); background: var(--bg-2); border-radius: 5px; padding: 2px 5px; }
 	.searchbar:hover { color: var(--fg); }
 	.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+	.tour-status { margin: 0; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); border: 1px solid var(--accent-edge); color: var(--fg); font-size: 12.5px; }
 	.tile { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--card-line); color: var(--fg); text-align: left; cursor: pointer; min-height: 104px; }
 	.tile:hover { background: color-mix(in srgb, var(--surface) 88%, var(--fg)); }
 	.tile :global(svg) { color: var(--accent); margin-bottom: 6px; }
