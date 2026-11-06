@@ -24,6 +24,14 @@ pub fn main() {
     // window, workspace and layer change (breadhelp-tour.lua), so it must
     // stay a cheap no-op when no tour is running.
     match cli::early(&args) {
+        Some(cli::Early::Help) => {
+            print!("{}", cli::USAGE);
+            return;
+        }
+        Some(cli::Early::Version) => {
+            println!("breadhelp {}", env!("CARGO_PKG_VERSION"));
+            return;
+        }
         Some(cli::Early::Listen) => return listen::run(),
         Some(cli::Early::TourEvent(id)) => {
             if tourctl::tour_running() {
