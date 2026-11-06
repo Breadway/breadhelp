@@ -12,7 +12,7 @@ body = "This is a quick, hands-on tour of your desktop. Instead of just describi
 [[step]]
 id = "breadbar"
 title = "Breadbar"
-body = "This bar across the top of your screen always shows your workspace, the time, and quick status for network, volume, and battery. Click any icon on it to see more."
+body = "This bar across the top of your screen always shows your workspace, the time, and quick status for network, volume, and battery. Click any icon on it to see more. If it hides itself when idle, move the pointer to the very top edge and it comes back."
 target_namespace = "breadbar"
 
 [[step]]
