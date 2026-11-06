@@ -4,8 +4,24 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { inkOn } from "./contrast";
 
 const STYLE_ID = "bread-theme";
+
+/**
+ * Re-derive --on-accent from the actual accent the theme resolved to. An
+ * older palette can omit it, and a stale one can pair dark ink with a dark
+ * accent; either way the primary buttons in Setup are unreadable.
+ */
+function applyAccentInk() {
+	const probe = document.createElement("span");
+	probe.style.cssText = "position:absolute;visibility:hidden;color:var(--accent)";
+	document.body.appendChild(probe);
+	const accent = getComputedStyle(probe).color;
+	probe.remove();
+	if (!accent) return;
+	document.documentElement.style.setProperty("--on-accent", inkOn(accent));
+}
 
 function apply(css: string) {
 	let style = document.getElementById(STYLE_ID);
@@ -15,6 +31,7 @@ function apply(css: string) {
 		document.head.appendChild(style);
 	}
 	style.textContent = css;
+	applyAccentInk();
 }
 
 export async function initTheme(): Promise<void> {

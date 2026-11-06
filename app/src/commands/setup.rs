@@ -26,7 +26,6 @@ pub struct SetupState {
     updates_tool: Option<Tool>,
     has_breadcrumbs: bool,
     snapper: bool,
-    snapshot_attempted: bool,
 }
 
 #[tauri::command]
@@ -46,7 +45,6 @@ pub async fn get_setup() -> SetupState {
             updates_tool: setup::pick_updates_tool(has_settings).map(|(label, ..)| Tool { label }),
             has_breadcrumbs: exec::command_exists("breadcrumbs"),
             snapper: setup::snapper_available(),
-            snapshot_attempted: state.day_zero_snapshot_attempted(),
         }
     })
     .await
@@ -94,15 +92,29 @@ pub async fn create_snapshot() -> Outcome {
     Outcome { message: setup::snapshot_message(ok).into(), ok }
 }
 
-/// Finish (or skip) setup: mark it done, start the tour, and get the window
-/// out of the way
-/// unless the user already finished it once.
+/// Finish (or skip) setup: mark it done and hand over to the tour. The
+/// window stays on screen with a status while the tour process comes up;
+/// if it does not (a missing or broken `breadhelp-tour`), the reason is
+/// returned and nothing is dismissed, so the user is never dropped on the
+/// desktop with no tour and no explanation.
 #[tauri::command]
-pub fn finish_setup(app: AppHandle) {
+pub async fn finish_setup(app: AppHandle) -> super::TourOutcome {
     let mut state = State::load();
     state.set_day_zero_completed(true);
-    if !state.onboarding_completed() {
-        tourctl::spawn_tour(&["--start"]);
+    if state.onboarding_completed() {
+        super::window::dismiss(&app);
+        return super::TourOutcome { ok: true, message: "Setup is done.".into(), tour_started: false };
     }
-    super::window::dismiss(&app);
+    tourctl::spawn_tour(&["--start"]);
+    let started = tauri::async_runtime::spawn_blocking(super::wait_for_tour).await.unwrap_or(false);
+    if started {
+        super::window::dismiss(&app);
+        super::TourOutcome { ok: true, message: "Starting the tour...".into(), tour_started: true }
+    } else {
+        super::TourOutcome {
+            ok: false,
+            message: "The tour didn't start, so Setup is still open. Try Take the tour from Home, or check that breadhelp-tour is installed.".into(),
+            tour_started: false,
+        }
+    }
 }
