@@ -7,10 +7,11 @@
 	let status: Record<string, "running" | "done" | "failed"> = $state({});
 
 	async function run(fix: Fix) {
-		if (!(await confirmFix(fix))) return;
+		const decision = await confirmFix(fix);
+		if (!decision.proceed) return;
 		status[fix.id] = "running";
 		try {
-			status[fix.id] = (await api.runFix(fix.id, fix.requiresConfirm)) ? "done" : "failed";
+			status[fix.id] = (await api.runFix(fix.id, decision.confirmed)) ? "done" : "failed";
 		} catch {
 			status[fix.id] = "failed";
 		}

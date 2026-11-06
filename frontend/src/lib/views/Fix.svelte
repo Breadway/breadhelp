@@ -46,12 +46,12 @@
 	}
 	async function runFix() {
 		if (!tree || !current || !current.fix) return;
-		const requiresConfirm = current.requiresConfirm;
+		const decision = await confirmFix({ label: current.fix, requiresConfirm: current.requiresConfirm });
 		// Declining leaves everything untouched: no command is invoked.
-		if (!(await confirmFix({ label: current.fix, requiresConfirm }))) return;
+		if (!decision.proceed) return;
 		result = "running";
 		try {
-			result = (await api.runSymptomFix(tree.id, current.id, requiresConfirm)) ? "done" : "failed";
+			result = (await api.runSymptomFix(tree.id, current.id, decision.confirmed)) ? "done" : "failed";
 		} catch {
 			result = "failed";
 		}

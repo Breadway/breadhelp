@@ -2,12 +2,15 @@
 	// The single confirmation prompt for requires_confirm fixes. Mounted once
 	// by the page; the Fix view, FixList and SearchPalette all open it with
 	// confirmFix() rather than drawing their own dialog.
-	import { onMount } from "svelte";
 	import { answerConfirmation, confirmation } from "$lib/confirm.svelte";
 
 	let dialog: HTMLDivElement | undefined = $state();
 
-	onMount(() => dialog?.focus());
+	// The dialog only exists while a prompt is pending, so focus it when that
+	// state appears. Focusing at mount would run before {#if} rendered it.
+	$effect(() => {
+		if (confirmation.pending) dialog?.focus();
+	});
 
 	function onKey(e: KeyboardEvent) {
 		if (e.key === "Escape") {

@@ -5,7 +5,7 @@
 	import Search from "@lucide/svelte/icons/search";
 	import Keys from "./Keys.svelte";
 	import { api } from "$lib/api";
-	import { confirmFix } from "$lib/confirm.svelte";
+	import { confirmation, confirmFix } from "$lib/confirm.svelte";
 	import { searchEntries } from "$lib/data.svelte";
 	import { go, nav } from "$lib/nav.svelte";
 	import { flat, search, type Entry } from "$lib/search";
@@ -37,10 +37,11 @@
 		switch (entry.kind) {
 			case "fix": {
 				const requiresConfirm = entry.requiresConfirm ?? false;
+				const decision = await confirmFix({ label: entry.title, description: entry.body, requiresConfirm });
 				// Declining closes the prompt and runs nothing.
-				if (!(await confirmFix({ label: entry.title, description: entry.body, requiresConfirm }))) return;
+				if (!decision.proceed) return;
 				status = `${entry.title}...`;
-				status = (await api.runFix(entry.id, requiresConfirm)) ? `${entry.title}: done.` : `${entry.title}: something went wrong.`;
+				status = (await api.runFix(entry.id, decision.confirmed)) ? `${entry.title}: done.` : `${entry.title}: something went wrong.`;
 				break;
 			}
 			case "symptom":
@@ -60,6 +61,9 @@
 	}
 
 	function onKey(e: KeyboardEvent) {
+		// A pending fix confirmation owns the keyboard. In particular, Esc
+		// here must not close the palette behind the prompt.
+		if (confirmation.pending) return;
 		if (e.key === "Escape") {
 			// Esc here closes search only, never the window behind it.
 			e.preventDefault();
@@ -78,7 +82,7 @@
 	}
 </script>
 
-<div class="backdrop" role="presentation" onclick={(e) => { if (e.target === e.currentTarget) nav.searchOpen = false; }}>
+<div class="backdrop" role="presentation" onclick={(e) => { if (!confirmation.pending && e.target === e.currentTarget) nav.searchOpen = false; }}>
 	<div class="palette" role="dialog" aria-modal="true" aria-label="Search help" tabindex="-1" onkeydown={onKey}>
 		<div class="bar">
 			<Search size={18} />
