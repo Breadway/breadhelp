@@ -32,6 +32,7 @@ toml = "0.8"
 # Non-destructive state editing (mirrors bos-settings/src/config/mod.rs).
 toml_edit = "0.22"
 anyhow = "1"
+include_dir = "0.7"
 bread-utils = { git = "https://git.breadway.dev/Breadway/bread-ecosystem", tag = "v0.7.2", features = ["toml", "bread-client"] }
 # Shared ecosystem theming: the same wallpaper palette bos-settings and the
 # GTK bread apps use, so this looks like part of the same desktop.

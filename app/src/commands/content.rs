@@ -33,7 +33,7 @@ pub fn list_guides() -> Vec<GuideSummary> {
             id: g.id.clone(),
             title: g.meta.title.clone(),
             tags: g.meta.tags.clone(),
-            has_simple: g.dir.join("content.beginner.md").is_file(),
+            has_simple: g.has_file("content.beginner.md"),
         })
         .collect()
 }
@@ -89,7 +89,7 @@ pub fn guide_body(category: &str, id: &str, simplified: bool) -> Option<String> 
 pub fn get_guide(category: String, id: String, simplified: bool) -> Option<GuideView> {
     let store = ContentStore::load();
     let guide = store.guide(&category, &id)?;
-    let has_simple = guide.dir.join("content.beginner.md").is_file();
+    let has_simple = guide.has_file("content.beginner.md");
     let simplified = simplified && has_simple;
     let body = store.body(guide, simplified);
     let binds = keybinds::load();
