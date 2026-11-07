@@ -1,6 +1,6 @@
 # Bug reports and your privacy
 
-This page says what breadbug collects, what it removes, what it never touches, and what happens when you send a report. It describes the breadbug client on bread `main` (commit 86ac332) and the server on breadbug-server `main` (commit b5d877e), checked on 2026-11-07 by reading the code and running the reporter in an isolated directory. Anything not in place yet is listed under Not yet shipped and is not promised.
+This page says what breadbug collects, what it removes, what it never touches, and what happens when you send a report. It describes the breadbug client on bread `main` (commit 86ac332) and the server on breadbug-server `main` (commit b5d877e), checked on 2026-11-07 by reading that code and the shipped `docs/breadbug.md`. Anything not in place yet is listed under Not yet shipped and is not promised. Anything not in place yet is listed under Not yet shipped and is not promised.
 
 ## Release status
 
@@ -19,7 +19,7 @@ Schema version 1. These are the top-level sections. `breadbug --app ID --dry-run
 - **Markers**: up to the 5 most recent records. Each has a time, an optional message and location, and up to 128 stack frames. Markers are usually panic, crash, freeze and recovery records. A stopped record (the app's process ended) can also be included, and the server rejects it, so that report is dropped (see Queue and receipts).
 - **Logs**: up to 300 recent log lines from the app.
 - **Daemon logs**: the daemon's recent warnings and errors.
-- **Events**: bread event names. Only these fields survive: battery percentage and AC state, network online state, and device subsystem, vendor and product ids. Other fields are dropped, and only the event name is kept.
+- **Events**: bread event names. Only these fields survive: battery percentage and AC state, network online state, and device or Bluetooth subsystem, vendor and product ids. Other fields are dropped, and only the event name is kept.
 - **Journal**: recent `journalctl --user` lines from the app's own processes, up to 150 lines. Each line is cut at 2048 bytes.
 - **Live stack**: stack frames of a frozen app that is still running. Only present if you agreed to that capture for this report.
 - **Notes**: the note you typed, scrubbed, at most 8 KiB.
