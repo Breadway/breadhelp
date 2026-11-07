@@ -436,6 +436,19 @@ mod shipped_content_tests {
         assert!(privacy_body.contains("freeze without a live stack"));
         assert!(privacy_body.contains("crash with no frames and no location"));
         assert!(privacy_body.contains("first line of your note"));
+        // Stopped markers: the client removes them before building a report,
+        // and the server accepts an older client's marker without clustering.
+        assert!(privacy_body.contains("removes stopped markers before building the report"));
+        assert!(privacy_body.contains("never builds or joins a cluster"));
+        assert!(!privacy_body.contains("server rejects it, so that report is dropped"));
+        // The provenance sentence appears once.
+        assert_eq!(privacy_body.matches("Anything not in place yet").count(), 1);
+        // The shortcut is described as dev-track only, matching release status.
+        assert!(report_body.contains("not available on a stable BOS image yet"));
+        assert!(report_body.contains("On a machine with breadbug from the bakery dev track"));
+        assert!(!report_body.contains("On BOS you can also press"));
+        assert!(report_body.contains("a stopped marker is not sent"));
+        assert!(!report_body.contains("the server does not accept"));
         // Delete now rebuilds or neutralises cluster metadata.
         assert!(privacy_body.contains("neutral title"));
         assert!(privacy_body.contains("What it does not remove"));

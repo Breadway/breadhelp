@@ -1,6 +1,6 @@
 # Bug reports and your privacy
 
-This page says what breadbug collects, what it removes, what it never touches, and what happens when you send a report. It describes the breadbug client on bread `main` (commit 86ac332) and the server on breadbug-server `main` (commit b5d877e), checked on 2026-11-07 by reading that code and the shipped `docs/breadbug.md`. Anything not in place yet is listed under Not yet shipped and is not promised. Anything not in place yet is listed under Not yet shipped and is not promised.
+This page says what breadbug collects, what it removes, what it never touches, and what happens when you send a report. It describes the breadbug client on bread `main` (commit 86ac332) and the server on breadbug-server `main` (commit b5d877e), checked on 2026-11-07 by reading that code and the shipped `docs/breadbug.md`. Anything not in place yet is listed under Not yet shipped and is not promised.
 
 ## Release status
 
@@ -16,7 +16,7 @@ Schema version 1. These are the top-level sections. `breadbug --app ID --dry-run
 - **System facts**: OS id and version, OS build, kernel, CPU architecture, GPU driver with PCI vendor and device ids, compositor version, bakery track, and breadd and API versions.
 - **Installed bread apps**: app ids and versions for the bread apps bakery reports as installed.
 - **Runtime**: whether the daemon is running, its uptime, adapter status strings, and module counts.
-- **Markers**: up to the 5 most recent records. Each has a time, an optional message and location, and up to 128 stack frames. Markers are usually panic, crash, freeze and recovery records. A stopped record (the app's process ended) can also be included, and the server rejects it, so that report is dropped (see Queue and receipts).
+- **Markers**: up to the 5 most recent records. Each has a time, an optional message and location, and up to 128 stack frames. Markers are usually panic, crash, freeze and recovery records. A stopped record (the app's process ended) is kept locally to close a freeze, and the client removes stopped markers before building the report. An older client can still send one; the server accepts and stores it so that report is not lost, but it never builds or joins a cluster.
 - **Logs**: up to 300 recent log lines from the app.
 - **Daemon logs**: the daemon's recent warnings and errors.
 - **Events**: bread event names. Only these fields survive: battery percentage and AC state, network online state, and device or Bluetooth subsystem, vendor and product ids. Other fields are dropped, and only the event name is kept.
@@ -140,7 +140,7 @@ To ask for a report to be removed when `breadbug delete` is not available to you
 - If the server cannot be reached, or returns a server error or 429, the exact report is saved to an offline queue of up to 20 reports (`MAX_QUEUED`). Queued reports are stored with mode 0600 in a 0700 directory at `~/.local/state/bread/breadbug/queue`, and they stay there until you send, cancel or clear them.
 - Nothing retries a queued report by itself. `breadbug queue flush` sends every queued report immediately, ignoring the stored wait. A report is not sent automatically at any other time.
 - The bakery timer runs `breadbug status` once a day. It only asks the server about receipts you hold. It does not send queued reports (`packaging/systemd/breadbug-status.service`, `breadbug/src/lib.rs`, `refresh_statuses`).
-- If the server rejects a report, the report is dropped from the queue and not tried again. This includes a report the server refuses because of its contents, such as a stopped marker.
+- If the server rejects a report as invalid, the report is dropped from the queue and not tried again.
 - Use `breadbug queue` to see what is waiting, and `breadbug queue cancel <id>` or `breadbug queue clear` to drop reports.
 
 ## Your controls

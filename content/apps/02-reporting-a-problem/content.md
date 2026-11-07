@@ -4,15 +4,15 @@ If a bread app crashed, froze, or isn't behaving, you can build a report, read e
 
 - [Terminal]breadbug|Report a problem[/Terminal]
 
-The button opens a terminal running `breadbug`. The reporter is a terminal program, so this help window launches it in the BOS terminal rather than as a bare command. On BOS you can also press **Super + Shift + B**. The crash notification offers a **Review report** action that starts the same reporter.
+The button opens a terminal running `breadbug`. The reporter is a terminal program, so this help window launches it in the BOS terminal rather than as a bare command. On a machine with breadbug from the bakery dev track, you can also press **Super + Shift + B**. The crash notification offers a **Review report** action that starts the same reporter.
 
 ## Which builds have it
 
-Breadbug is in bread `v0.10.0` and on bread `main`. The bakery dev track builds from bread `main`, so machines on that track already have breadbug and the daily status timer. The current BOS ISO pin is still bread `0.9.0`, so an image built from that pin does not include breadbug. The shortcut and the crash notification are on bos `main`, but no BOS tag up to `v0.6.2` has them.
+Breadbug is in bread `v0.10.0` and on bread `main`. The bakery dev track builds from bread `main`, so machines on that track already have breadbug and the daily status timer. The current BOS ISO pin is still bread `0.9.0`, so an image built from that pin does not include breadbug. The shortcut and the crash notification are on bos `main`, but no BOS tag up to `v0.6.2` has them, so they are not available on a stable BOS image yet.
 
 ## Report a crash or a freeze
 
-- Open the reporter, or press **Super + Shift + B**.
+- Open the reporter from this page. On a machine with breadbug from the bakery dev track, you can also press **Super + Shift + B**.
 - Pick the app that has the problem. Apps that recently crashed or froze are listed first.
 - Choose what happened: crash, freeze, or behavior.
 - Add a note in your own words if you want to. Do not paste passwords or private text. It is scrubbed, but you are the best judge of what is private.
@@ -54,7 +54,7 @@ Sending needs two things: sending switched on, and an explicit Send for that rep
 
 A successful send prints a receipt. It also prints the `breadbug delete` command when the server gave a deletion token. Keep the receipt if you want to delete the report later.
 
-If the server cannot be reached, the exact report is kept in an offline queue. See it with `breadbug queue`. Nothing retries it on its own. Send the queue with `breadbug queue flush`, which tries every queued report at once. A report the server rejects is dropped, including a report with a stopped marker, which the server does not accept.
+If the server cannot be reached, the exact report is kept in an offline queue. See it with `breadbug queue`. Nothing retries it on its own. Send the queue with `breadbug queue flush`, which tries every queued report at once. A report the server rejects as invalid is dropped from the queue; a stopped marker is not sent, because the client removes it when it builds the report.
 
 ## Delete a report you sent
 
