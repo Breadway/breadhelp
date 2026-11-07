@@ -1,18 +1,12 @@
-# Shared breadbug consent text (single source inside breadhelp)
+# Shared breadbug consent text
 
-Provenance: the proposed wording below is taken from bread
-`feature/breadbug-consent` (`bread-bug/src/consent.rs`, CONSENT_TEXT) at
-1e49507a6c506fa1023bf3c201c574ed5abc763f. That branch is NOT merged, so no
-shipped reporter or settings page shows this text yet. HELP-10 requires this
-statement to become the same text the reporter shows and the settings page
-shows; until that branch lands, the privacy guide quotes the proposal from
-this file, and both guides point here instead of each carrying their own copy.
+Source of truth: `CONSENT_TEXT` in bread `bread-bug/src/consent.rs` on bread `main`. The terminal reporter shows it before a first session, and `breadbug-gui` and the Bug reports page in bos-settings read the same constant. The text below must match that constant exactly, line for line. A test in `crates/breadhelp-core/src/content/mod.rs` checks that the privacy guide quotes it word for word.
 
-Cross-repo prerequisites (tracked, not claimed): bread
-`feature/breadbug-consent` merged, a Bug reports page in bos-settings, and
-publication on the BOS site. None of the three exists yet.
+This copy exists because breadhelp cannot depend on bread's Rust crate, so CI has no bread source to read. `scripts/check-consent-sync.py PATH_TO_BREAD_CHECKOUT` compares this file with the constant and is run by hand when the text changes.
 
-## Proposed notice
+Still open: the BOS site does not publish this notice or the privacy statement. That is tracked as a HELP-10 follow-up, not claimed here.
+
+## Notice
 
 Reporting a problem
 

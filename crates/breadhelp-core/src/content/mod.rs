@@ -362,7 +362,7 @@ mod shipped_content_tests {
     }
 
     #[test]
-    fn the_breadbug_guides_match_shipped_behavior_and_track_planned_work() {
+    fn the_breadbug_guides_match_shipped_behavior_and_track_pending_work() {
         let guides = shipped();
         let report = guides
             .get(&("apps".into(), "02-reporting-a-problem".into()))
@@ -377,36 +377,32 @@ mod shipped_content_tests {
         // the BOS terminal, never as a bare shell run.
         assert!(report_body.contains("[Terminal]breadbug|Report a problem[/Terminal]"));
         assert!(!report_body.contains("[Run]breadbug"));
-        // Executable today: list, preview, save.
-        for flow in ["breadbug list", "--dry-run", "--save"] {
+        // Every shipped command the guide teaches must appear in it.
+        for flow in [
+            "breadbug list",
+            "--dry-run",
+            "--save",
+            "breadbug status",
+            "breadbug delete <receipt>",
+            "breadbug history",
+            "breadbug queue",
+            "breadbug config upload on",
+        ] {
             assert!(
                 report_body.contains(flow),
                 "reporting guide lacks shipped flow: {flow}"
             );
         }
-        // Unmerged bread work is labeled planned, with the branch gates named.
-        assert!(report_body.contains("## Planned"));
-        for branch in [
-            "feature/breadbug-upload",
-            "feature/breadbug-status",
-            "feature/breadbug-gui",
-        ] {
-            assert!(
-                report_body.contains(branch),
-                "reporting guide lacks gate: {branch}"
-            );
-        }
-        // Server-side commands must not read as runnable outside Planned.
-        let (shipped_text, planned_text) = report_body
-            .split_once("## Planned")
-            .expect("planned section");
-        for cmd in ["breadbug status", "breadbug delete", "breadbug queue"] {
-            assert!(
-                !shipped_text.contains(cmd),
-                "reporting guide presents {cmd} as shipped"
-            );
-            assert!(planned_text.contains(cmd), "planned section lacks {cmd}");
-        }
+        // Nothing in the guide may still call merged work unshipped.
+        assert!(!report_body.contains("## Planned"));
+        assert!(!report_body.contains("sending is not available"));
+        assert!(!report_body.contains("feature/breadbug-upload"));
+
+        // M2: the dev track already ships breadbug, and the daily status call
+        // only happens when a receipt is held.
+        assert!(report_body.contains("dev track"));
+        assert!(report_body.contains("v0.10.0"));
+        assert!(report_body.contains("at least one receipt"));
 
         // Privacy matches the shipped schema sections and states the limits.
         for section in [
@@ -415,11 +411,18 @@ mod shipped_content_tests {
             "markers",
             "system",
             "installed",
-            "embeddings",
             "redactions",
             "90 days",
             "backup",
             "cluster metadata",
+            "never collected",
+            "Screenshots",
+            "Process memory",
+            "Core dumps",
+            "Sending is off by default",
+            "HTTPS",
+            "install id",
+            "30 days",
         ] {
             assert!(
                 privacy_body
@@ -428,12 +431,41 @@ mod shipped_content_tests {
                 "privacy guide lacks: {section}"
             );
         }
-        // No rotation promise: the rotating install id is unmerged.
-        assert!(!privacy_body.contains("30 days"));
-        assert!(privacy_body.contains("no such promise applies"));
+        // M1: a freeze without a live stack is titled from the note, not from
+        // a crash message or frame.
+        assert!(privacy_body.contains("freeze without a live stack"));
+        assert!(privacy_body.contains("crash with no frames and no location"));
+        assert!(privacy_body.contains("first line of your note"));
+        // Stopped markers: the client removes them before building a report,
+        // and the server accepts an older client's marker without clustering.
+        assert!(privacy_body.contains("removes stopped markers before building the report"));
+        assert!(privacy_body.contains("never builds or joins a cluster"));
+        assert!(!privacy_body.contains("server rejects it, so that report is dropped"));
+        // The provenance sentence appears once.
+        assert_eq!(privacy_body.matches("Anything not in place yet").count(), 1);
+        // The shortcut is described as dev-track only, matching release status.
+        assert!(report_body.contains("not available on a stable BOS image yet"));
+        assert!(report_body.contains("On a machine with breadbug from the bakery dev track"));
+        assert!(!report_body.contains("On BOS you can also press"));
+        assert!(report_body.contains("a stopped marker is not sent"));
+        assert!(!report_body.contains("the server does not accept"));
+        // Delete now rebuilds or neutralises cluster metadata.
+        assert!(privacy_body.contains("neutral title"));
+        assert!(privacy_body.contains("What it does not remove"));
+        // Local-only embedding and no third-party model calls.
+        assert!(privacy_body.contains("private IPv4"));
+        assert!(privacy_body.contains("makes no calls to third-party model APIs"));
+        // Queue: nothing retries on its own.
+        assert!(privacy_body.contains("Nothing retries a queued report by itself"));
+        // Stale claims that no longer match the shipped client or server.
+        assert!(!privacy_body.contains("existing permissions"));
+        assert!(!privacy_body.contains("BREAD-55"));
+        assert!(!privacy_body.contains("prefix test"));
         // Scrub limits: best effort, journal direct-read caveat.
         assert!(privacy_body.contains("best effort"));
         assert!(privacy_body.contains("journalctl"));
+        // The remaining cross-repo gate is named.
+        assert!(privacy_body.contains("BOS site publication"));
     }
 
     #[test]
@@ -441,18 +473,19 @@ mod shipped_content_tests {
         let root = repo_root();
         let shared = std::fs::read_to_string(root.join("content/shared/breadbug-consent.md"))
             .expect("shared consent source");
-        let (_, notice) = shared
-            .split_once("## Proposed notice")
-            .expect("notice section");
+        let (_, notice) = shared.split_once("## Notice").expect("notice section");
         let lines: Vec<&str> = notice
             .lines()
             .map(str::trim)
             .filter(|l| !l.is_empty())
             .collect();
         assert!(lines.len() > 5, "shared notice is unexpectedly short");
-        // Provenance: the file records which unmerged branch it came from.
-        assert!(shared.contains("feature/breadbug-consent"));
-        assert!(shared.contains("NOT merged"));
+        // Provenance: the file names the merged bread constant and the
+        // consumers that read it.
+        assert!(shared.contains("CONSENT_TEXT"));
+        assert!(shared.contains("bread-bug/src/consent.rs"));
+        assert!(shared.contains("bos-settings"));
+        assert!(!shared.contains("NOT merged"));
 
         let mut guides = BTreeMap::new();
         scan_root(&root.join("content"), &mut guides);
@@ -466,6 +499,25 @@ mod shipped_content_tests {
                 "privacy guide drifts from shared source: {line}"
             );
         }
+        // The guide's copy must also keep the paragraph order of the shared notice.
+        let notice_text = lines.join(" ");
+        let start = privacy_body
+            .find("Reporting a problem")
+            .expect("consent heading in privacy guide");
+        let rest = &privacy_body[start..];
+        let guide_block = rest
+            .split_once("## Not yet shipped")
+            .map_or(rest, |(a, _)| a);
+        let guide_text = guide_block
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert!(
+            guide_text.contains(&notice_text),
+            "privacy guide consent block differs from shared notice"
+        );
     }
 
     /// A throwaway content root for the precedence tests.
