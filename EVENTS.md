@@ -48,7 +48,7 @@ bread.spawn(function()
 end)
 ```
 
-### Not implemented: extra verbs
+## Not implemented
 
 There is no `onboard` / `tour` / `suggest` command verb. Those already
 exist as local CLI flags (`--onboard`, `--tour-event`, `--suggest`).
