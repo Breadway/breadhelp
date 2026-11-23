@@ -1,4 +1,4 @@
-# breadhelp: bread event integration
+# help: bread event integration
 
 breadhelp is a standalone GTK help center: it works exactly the same with
 or without `breadd` running. When breadd *is* present, it publishes one
