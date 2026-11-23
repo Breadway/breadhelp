@@ -1,4 +1,4 @@
-# breadhelp: bread event integration
+# help: bread event integration
 
 breadhelp is a standalone help center: it works exactly the same with
 or without `breadd` running. When breadd *is* present, it publishes one
@@ -54,7 +54,7 @@ bread.spawn(function()
 end)
 ```
 
-### Not implemented: extra verbs
+## Not implemented
 
 There is no `onboard` / `tour` / `suggest` command verb. Those already
 exist as local CLI flags (`--onboard`, `--tour-event`, `--suggest`).
